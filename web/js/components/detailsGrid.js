@@ -1,0 +1,8 @@
+import { el, openUrl } from '../utils/dom.js';
+import { iconFor } from './iconButton.js';
+const clean = list => list.map(x=>x.trim()).filter(Boolean);
+export function detailsGrid(text='', refData={}) { const lines=clean(text.split('\n')); const paid=clean(lines.filter(l=>l.toLowerCase().startsWith('paid:')).flatMap(l=>l.substring(5).split('|'))); const unpaid=clean(lines.filter(l=>l.toLowerCase().startsWith('unpaid:')).flatMap(l=>l.substring(7).split('|'))); const maps=clean(lines.filter(l=>l.toLowerCase().startsWith('maps:')).flatMap(l=>l.substring(5).split('|'))); const other=lines.filter(l=>!['paid:','unpaid:','maps:'].some(p=>l.toLowerCase().startsWith(p))); return el('div', { class:'details-grid' },
+  other.map(l => el('p', {}, l.toLowerCase().startsWith('info:') ? `${iconFor(refData,'Icon_Info')} ${l.substring(5).trim()}` : l)),
+  paid.length ? block('PAID', paid, 'paid-chip', iconFor(refData,'Icon_Paid')) : '', unpaid.length ? block('UNPAID', unpaid, 'unpaid-chip', iconFor(refData,'Icon_Unpaid')) : '', maps.length ? mapBlock(maps, refData) : ''); }
+function block(title, items, cls, icon) { return el('div', { class:'mini-section' }, el('strong', {}, title), el('div', { class:'card-grid' }, items.map(i => el('span', { class:cls }, `${icon} ${i}`)))); }
+function mapBlock(items, refData) { return el('div', { class:'mini-section' }, el('strong', {}, 'MAPS'), el('div', { class:'card-grid' }, items.map(item => { const [name,url='']=item.split(','); return el('button', { class:'file-card', type:'button', onClick:()=>openUrl(url.trim()) }, el('b', {}, iconFor(refData,'Icon_Map')), el('span', {}, name.trim())); }))); }

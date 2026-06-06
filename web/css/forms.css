@@ -1,0 +1,7 @@
+.select-label { display:grid; gap:4px; font-weight:800; }
+select, input, textarea { width:100%; border:1px solid color-mix(in srgb, var(--text-main) 20%, transparent); border-radius:12px; padding:10px; background:var(--bg-editbox); color:var(--text-main); }
+textarea { min-height:100px; resize:vertical; }
+.edit-form { display:grid; gap:10px; }
+.edit-form label { display:grid; gap:5px; font-weight:800; }
+.chip-btn { padding:7px 10px; font-size:13px; background:rgba(128,128,128,.10); }
+.edit-actions { position:sticky; bottom:76px; background:var(--bg-main); padding:8px 0; border-top:1px solid rgba(128,128,128,.15); }
