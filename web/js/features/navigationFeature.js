@@ -1,0 +1,1 @@
+export function attachHorizontalSwipe(el, onLeft, onRight) { let start=0; el.addEventListener('pointerdown', e => start=e.clientX); el.addEventListener('pointerup', e => { const dx=e.clientX-start; if (dx > 120) onRight(); if (dx < -120) onLeft(); }); }
