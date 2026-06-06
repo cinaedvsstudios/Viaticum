@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.ChrisFit" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.Viaticum" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/white</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_screen</item>
+        <item name="postSplashScreenTheme">@style/Theme.Viaticum</item>
+    </style>
 
 </resources>
