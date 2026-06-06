@@ -1,29 +1,86 @@
-.preview-panel, .section-card, .trip-card, .schedule-list { border-radius:var(--radius); background:color-mix(in srgb, var(--bg-main) 97%, var(--btn-save)); border:1px solid rgba(128,128,128,.18); padding:12px; box-shadow:var(--shadow); }
-.preview-panel > header { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; background:var(--header-prev-bg); color:var(--header-prev-text); border-radius:14px; padding:10px; margin-bottom:10px; }
-.preview-panel h2, .schedule-list h2 { margin:0 0 4px; font-size:1.05rem; }
-.chip-row { display:flex; gap:6px; flex-wrap:wrap; }
-.status-chip, .paid-chip, .unpaid-chip { display:inline-flex; align-items:center; justify-content:center; border-radius:999px; padding:5px 8px; font-size:12px; font-weight:700; }
-.status-chip { background:color-mix(in srgb, var(--btn-save) 16%, transparent); }
-.section-card { margin:10px 0; }
-.section-card.schedule { background:var(--day-sched-bg); border-color:var(--day-sched-border); }
-.section-card.details { background:var(--day-detail-bg); border-color:var(--day-detail-border); }
-.section-card.files { background:var(--day-files-bg); border-color:var(--day-files-border); }
-.section-card > header { display:flex; justify-content:space-between; font-size:12px; letter-spacing:.06em; opacity:.72; margin-bottom:8px; }
-.timeline-row { display:grid; grid-template-columns:50px 18px 1fr 28px; gap:6px; align-items:start; margin-bottom:8px; }
-.timeline-row time { font-weight:800; font-size:13px; }
-.timeline-row p { margin:0; }
-.dot { width:12px; height:12px; border-radius:50%; background:var(--day-sched-border); margin-top:3px; }
-.card-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; margin:6px 0; }
-.file-card { min-height:68px; border:0; border-radius:12px; background:rgba(128,128,128,.12); color:var(--text-main); padding:6px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; text-align:center; overflow:hidden; }
-.file-card span { font-size:11px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-.paid-chip { background:#e8f5e9; color:#2e7d32; border:1px solid #4caf50; }
-.unpaid-chip { background:#ffebee; color:#c62828; border:1px solid #f44336; }
-.mini-section { margin-top:10px; }
-.image-box { width:112px; height:92px; object-fit:cover; border-radius:14px; background:rgba(255,255,255,.22); flex:0 0 auto; }
-.trip-day { display:grid; grid-template-columns:52px 1fr; gap:10px; margin:0 0 12px; }
-.trip-date { text-align:center; color:var(--btn-save); }
-.trip-card { padding:0; overflow:hidden; border-color:var(--trip-closed-bord); background:var(--trip-closed-bg); }
-.trip-day.open .trip-card { border-color:var(--trip-open-bord); background:var(--trip-open-bg); }
-.trip-card > header { display:flex; justify-content:space-between; padding:12px; }
-.trip-card > div { padding:0 12px 12px; }
-.candidate-row { margin-left:60px; display:flex; gap:8px; flex-wrap:wrap; }
+.card,
+.section-card,
+.preview-card,
+.day-card,
+.trip-day-card {
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--soft-border);
+  background: var(--card-bg);
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.card-title,
+.section-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  opacity: .55;
+  margin-bottom: 8px;
+}
+
+.timeline-row,
+.schedule-row {
+  display: grid;
+  grid-template-columns: 45px 22px 1fr 24px;
+  gap: 4px;
+  align-items: start;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.timeline-time { font-weight: 700; }
+
+.file-grid,
+.links-grid,
+.details-grid,
+.map-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.file-card,
+.detail-pill,
+.map-card {
+  min-height: 58px;
+  border-radius: 12px;
+  background: rgba(128,128,128,.12);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 9px;
+  overflow: hidden;
+}
+
+.file-card .icon,
+.map-card .icon { font-size: 20px; }
+
+.status-chip {
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(255,255,255,.22);
+}
+
+.preview-actions,
+.icon-row,
+.action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 6px 4px;
+}
+
+.preview-actions button,
+.icon-row button,
+.action-row button {
+  font-size: 19px;
+  padding: 3px 4px;
+  min-width: 26px;
+}
