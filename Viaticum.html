@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel App</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: white;
+}
+
+.top {
+    height: 45vh;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    box-sizing: border-box;
+    background: #4FC3F7;
+}
+
+.header {
+    text-align: center;
+    font-weight: bold;
+    padding: 10px;
+}
+
+.days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    font-size: 11px;
+    text-align: center;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;                 /* FIX */
+    background: white;        /* FIX */
+    flex: 1;
+}
+
+.cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: transparent;
+}
+
+.empty {
+    background: #E6E1E8;
+}
+
+.prev {
+    opacity: 0.4;
+}
+
+.middle {
+    height: 30vh;
+    background: #81D4FA;
+    display: flex;
+    flex-direction: column;
+}
+
+.middle-header {
+    text-align: center;
+    padding: 6px;
+    font-weight: bold;
+}
+
+.table-header {
+    display: flex;
+    padding: 6px;
+    font-weight: bold;
+}
+
+.table-header div {
+    flex: 1;
+}
+
+.schedule {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.row {
+    display: flex;
+    padding: 6px;
+    cursor: pointer;
+}
+
+.row div {
+    flex: 1;
+}
+
+.bottom {
+    height: 25vh;
+    background: #B3E5FC;
+    display: flex;
+    flex-direction: column;
+}
+
+.bottom-header {
+    text-align: center;
+    padding: 6px;
+    font-weight: bold;
+}
+
+.details {
+    padding: 10px;
+    overflow-y: auto;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="top">
+    <div class="header" id="monthTitle"></div>
+
+    <div class="days">
+        <div>Mon</div><div>Tue</div><div>Wed</div>
+        <div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+    </div>
+
+    <div class="grid" id="calendar"></div>
+</div>
+
+<div class="middle">
+    <div class="middle-header">Schedule</div>
+
+    <div class="table-header">
+        <div>Day</div>
+        <div>City</div>
+        <div>Event</div>
+    </div>
+
+    <div class="schedule" id="schedule"></div>
+</div>
+
+<div class="bottom">
+    <div class="bottom-header" id="selectedTitle">Select a day</div>
+    <div class="details" id="details"></div>
+</div>
+
+<script>
+
+const sheetUrl = "https://opensheet.elk.sh/1D8CT24J65KRPubakzrOCaYgavXGTKuo_86YBMjqGcyg/Sheet%201";
+
+let entries = [];
+let selectedDate = null;
+let currentMonth = new Date();
+
+function emoji(s){
+    return {
+        "Booked":"📅",
+        "Pending":"⏲️",
+        "Canceled":"❌",
+        "Home":"🏠",
+        "Unsure":"💡"
+    }[s] || "";
+}
+
+function normalize(d){
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function sameDay(a,b){
+    return a.getFullYear()==b.getFullYear()
+        && a.getMonth()==b.getMonth()
+        && a.getDate()==b.getDate();
+}
+
+async function load(){
+    const res = await fetch(sheetUrl);
+    const data = await res.json();
+
+    entries = data.map(e => ({
+        date: normalize(new Date(e.RealDate)),
+        event: e.Event,
+        location: e.Location,
+        status: e.Status,
+        schedule: e.Schedule,
+        details: e.Details,
+        links: e.Links
+    }));
+
+    render();
+}
+
+function render(){
+    renderCalendar();
+    renderSchedule();
+    renderDetails();
+}
+
+function renderCalendar(){
+    const cal = document.getElementById("calendar");
+    cal.innerHTML = "";
+
+    const y = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+
+    const first = new Date(y, m, 1);
+    const days = new Date(y, m+1, 0).getDate();
+
+    let offset = first.getDay();
+    offset = offset === 0 ? 6 : offset - 1;
+
+    const prevDays = new Date(y, m, 0).getDate();
+
+    document.getElementById("monthTitle").innerText =
+        currentMonth.toLocaleString('default',{month:'long'})+" "+y;
+
+    for(let i=0;i<offset;i++){
+        const div=document.createElement("div");
+        div.className="cell empty prev";
+        div.innerText = prevDays - offset + i + 1;
+        cal.appendChild(div);
+    }
+
+    for(let d=1; d<=days; d++){
+        const date = normalize(new Date(y,m,d));
+
+        const matches = entries.filter(e => sameDay(e.date, date));
+        const displayMatches = matches.filter(e => emoji(e.status) !== "" || e.event);
+
+        const div = document.createElement("div");
+        div.className="cell";
+
+        if(displayMatches.length === 0){
+            div.classList.add("empty");
+            div.innerText = d;
+        } else {
+            div.innerText = emoji(displayMatches[0].status);
+        }
+
+        div.onclick = () => {
+            selectedDate = date;
+            renderDetails();
+        };
+
+        cal.appendChild(div);
+    }
+}
+
+function renderSchedule(){
+    const s = document.getElementById("schedule");
+    s.innerHTML = "";
+
+    const y = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+
+    const list = entries
+        .filter(e => e.date.getMonth() === m && e.date.getFullYear() === y)
+        .sort((a,b)=>a.date - b.date);
+
+    list.forEach(e=>{
+        if(emoji(e.status) !== "" || e.event){
+            const row = document.createElement("div");
+            row.className="row";
+
+            row.innerHTML = `
+                <div>${e.date.getDate()} ${emoji(e.status)}</div>
+                <div>${e.location}</div>
+                <div>${e.event}</div>
+            `;
+
+            row.onclick = ()=>{
+                selectedDate = e.date;
+                renderDetails();
+            };
+
+            s.appendChild(row);
+        }
+    });
+}
+
+function renderDetails(){
+    const title = document.getElementById("selectedTitle");
+    const d = document.getElementById("details");
+
+    if(!selectedDate){
+        title.innerText="Select a day";
+        d.innerHTML="";
+        return;
+    }
+
+    title.innerText = selectedDate.toDateString();
+
+    const list = entries.filter(e => sameDay(e.date, selectedDate))
+        .filter(e => emoji(e.status) !== "" || e.event);
+
+    if(list.length === 0){
+        d.innerHTML="No data";
+        return;
+    }
+
+    d.innerHTML="";
+
+    list.forEach(e=>{
+        d.innerHTML += `
+            <div>📍 ${e.location}</div>
+            <div>🎉 ${e.event}</div>
+            <div>${emoji(e.status)}</div>
+            <div>${e.schedule}</div>
+            <br>
+        `;
+    });
+}
+
+load();
+
+</script>
+
+</body>
+</html>
