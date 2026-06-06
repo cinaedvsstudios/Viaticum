@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.viaticum"
+    namespace = "com.example.chrisfit"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.viaticum"
+        applicationId = "com.example.chrisfit"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
@@ -38,18 +38,10 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.14"
     }
-
-    // 🔥 THIS SECTION FIXES THE "2 files found with path 'META-INF/DEPENDENCIES'" ERROR
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            excludes += "META-INF/DEPENDENCIES"
-        }
-    }
 }
 
 dependencies {
-    // Compose
+
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))
     implementation("androidx.activity:activity-compose:1.9.0")
     implementation("androidx.compose.ui:ui")
@@ -57,20 +49,12 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
-    // Room & Coroutines
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
+
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("io.coil-kt:coil-compose:2.5.0")
 
-    // Splash Screen
+    // 🔥 SPLASH SCREEN (NEW)
     implementation("androidx.core:core-splashscreen:1.0.1")
-
-    // 🔥 GOOGLE AUTH & SHEETS API (FIXED MISSING EXTENSIONS)
-    implementation("com.google.android.gms:play-services-auth:21.2.0")
-    implementation("com.google.api-client:google-api-client-android:1.34.1")
-    implementation("com.google.http-client:google-http-client-android:1.42.3")
-    implementation("com.google.http-client:google-http-client-gson:1.42.3")
-    implementation("com.google.apis:google-api-services-sheets:v4-rev20220927-2.0.0")
 }
