@@ -1,21 +1,23 @@
 @media (min-width: 520px) {
-  :root { --screen-max: 460px; }
-  body { box-shadow: 0 0 24px rgba(0,0,0,.08); }
+  :root { --screen-max: 100vw; }
+  body { box-shadow: none; }
 }
 
 @media (max-width: 380px) {
-  html, body { font-size: 13px; }
+  html, body { font-size: 14px; }
   .top-panel,
   .calendar-panel { height: 250px; padding: 10px; }
   .calendar-day,
   .day-cell,
-  .month-day { min-height: 25px; font-size: 12px; }
+  .month-day { min-height: 34px; font-size: 13px; }
   .calendar-day .emoji,
   .day-cell .emoji,
-  .month-day .emoji { font-size: 20px; }
+  .month-day .emoji,
+  .emoji-grid { font-size: 20px; }
   .file-grid,
   .links-grid,
   .details-grid,
   .map-grid { gap: 4px; }
   .status-picker { grid-template-columns: repeat(6, 1fr); gap: 3px; }
+  .timeline-row { grid-template-columns: 54px 20px 1fr 24px; font-size: 14px; }
 }

@@ -5,8 +5,8 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  max-width: var(--screen-max);
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   background: var(--app-bg);
 }
 
@@ -14,6 +14,20 @@
 .screen-content {
   flex: 1;
   padding: 0 12px calc(var(--nav-height) + 10px);
+}
+
+.main-screen {
+  padding-bottom: var(--nav-height);
+}
+
+.day-screen,
+.trip-screen,
+.edit-screen {
+  padding: 16px 16px calc(var(--nav-height) + 12px);
+}
+
+.trip-screen {
+  padding-top: 32px;
 }
 
 .top-panel,
@@ -27,9 +41,9 @@
   height: 10px;
 }
 
+.month-header,
 .schedule-header,
 .preview-header,
-.month-header,
 .day-header,
 .trip-header,
 .edit-header {
@@ -37,6 +51,72 @@
   padding: 8px 12px;
   text-align: center;
   font-weight: 700;
+}
+
+.month-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.month-header button {
+  color: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  min-width: 24px;
+}
+
+.day-header,
+.trip-header,
+.edit-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  text-align: left;
+}
+
+.day-header > div:first-child,
+.trip-header > div:first-child,
+.edit-header > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.day-header h1,
+.trip-header h1,
+.edit-header h1 {
+  margin: 6px 0 4px;
+  font-size: 28px;
+  line-height: 1.05;
+  font-weight: 800;
+}
+
+.day-header h2,
+.trip-header h2,
+.edit-header h2,
+.day-header p,
+.trip-header p,
+.edit-header p {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.day-header select,
+.trip-header select,
+.edit-header select,
+.month-header select,
+.dropdown-menu select {
+  width: auto;
+  max-width: 170px;
+  margin: 0;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.92);
 }
 
 .schedule-list-header {
@@ -53,20 +133,77 @@
   padding: 0 12px;
 }
 
+.toolbar,
+.trip-actions,
+.edit-actions,
+.preview-actions,
+.icon-row,
+.action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 10px 0 8px;
+}
+
+.toolbar .icon-btn,
+.trip-actions .icon-btn,
+.preview-actions .icon-btn,
+.icon-row .icon-btn,
+.action-row .icon-btn {
+  min-width: 34px;
+  min-height: 34px;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar .icon-btn small,
+.trip-actions .icon-btn small,
+.preview-actions .icon-btn small,
+.icon-row .icon-btn small,
+.action-row .icon-btn small {
+  display: none;
+}
+
+.toolbar .icon,
+.trip-actions .icon,
+.preview-actions .icon,
+.icon-row .icon,
+.action-row .icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.day-content,
+.trip-timeline,
+.edit-form {
+  margin-top: 12px;
+}
+
+.preview-scroll {
+  max-height: 270px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
 .bottom-nav,
 nav.bottom-nav {
   position: fixed;
-  left: 50%;
+  left: 0;
+  right: 0;
   bottom: 0;
-  transform: translateX(-50%);
-  width: min(100vw, var(--screen-max));
+  transform: none;
+  width: 100%;
   height: var(--nav-height);
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  align-items: center;
+  align-items: stretch;
   background: #f5f5f5;
   z-index: 100;
   box-shadow: 0 -1px 8px rgba(0,0,0,.08);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .bottom-nav button,
@@ -76,9 +213,20 @@ nav.bottom-nav {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  font-size: 11px;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 700;
   padding: 4px 2px;
+  opacity: .45;
 }
 
-.nav-icon { font-size: 22px; line-height: 1; }
+.bottom-nav button.active,
+.nav-item.active {
+  opacity: 1;
+}
+
+.nav-icon,
+.bottom-nav .icon {
+  font-size: 27px;
+  line-height: 1;
+}
