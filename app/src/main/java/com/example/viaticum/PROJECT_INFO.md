@@ -1,4 +1,4 @@
-# ChrisFit App – Project Structure (DO NOT BREAK)
+# Viaticum App – Project Structure (DO NOT BREAK)
 
 ## CORE RULE (VERY IMPORTANT)
 
