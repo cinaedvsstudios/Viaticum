@@ -1,0 +1,80 @@
+/* Viaticum Phase 1.9.5 — schedule scrollbar position fix.
+   Goal: the scrollbar belongs to the scroll area OUTSIDE the yellow schedule card,
+   not inside/over the yellow card border.
+*/
+
+/* MAIN DASHBOARD SELECTED-DAY CARD */
+@media (min-width: 701px) {
+  .day-dashboard-card .day-card-schedule-preview {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-right: 10px !important;
+    scrollbar-gutter: stable !important;
+    box-sizing: border-box !important;
+  }
+
+  .day-dashboard-card .day-card-schedule-preview .section-card.schedule {
+    overflow: visible !important;
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: max-content !important;
+    max-height: none !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Prevent older rules from putting the scrollbar on the yellow card itself. */
+  .day-dashboard-card .day-card-schedule-preview .section-card.schedule,
+  .day-dashboard-card .day-card-schedule-preview .section-card.schedule > * {
+    scrollbar-gutter: auto !important;
+  }
+}
+
+/* SINGLE DAY DESKTOP VIEW */
+@media (min-width: 900px) {
+  .day-content-two-col {
+    overflow: hidden !important;
+  }
+
+  .day-content-two-col > .section-card.schedule {
+    overflow: visible !important;
+    min-height: max-content !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Add an outer scroll lane around the schedule column so the bar sits outside the yellow border. */
+  .day-content-two-col::before {
+    content: none !important;
+  }
+
+  .day-content-two-col {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  }
+
+  .day-content-two-col > .section-card.schedule {
+    align-self: start !important;
+  }
+
+  /* Browser support fallback: if the schedule card itself must scroll, push the bar outside visually. */
+  .day-content-two-col > .section-card.schedule {
+    padding-right: 18px !important;
+    background-clip: padding-box !important;
+  }
+
+  .day-content-two-col > .section-card.schedule::-webkit-scrollbar {
+    width: 10px;
+  }
+}
+
+/* Mobile remains vertical and normal. */
+@media (max-width: 700px) {
+  .day-dashboard-card .day-card-schedule-preview,
+  .day-dashboard-card .day-card-schedule-preview .section-card.schedule {
+    overflow: visible !important;
+    padding-right: 0 !important;
+  }
+}
