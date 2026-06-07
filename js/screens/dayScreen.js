@@ -70,10 +70,10 @@ function header(entry) {
         })
       ),
       entry.location ? el('h2', {}, `${state.refData.locations[entry.location] || '📍'} ${entry.location}`) : '',
-      entry.event ? el('div', { class: 'day-event-status-line' },
+      el('div', { class: 'day-event-status-line' },
         statusChips(entry.status, state.refData),
-        el('span', { class: 'day-event-line' }, entry.event)
-      ) : statusChips(entry.status, state.refData)
+        entry.event ? el('span', { class: 'day-event-line' }, entry.event) : ''
+      )
     ),
     imageBox(findEventImage(entry, state.refData), entry.event)
   );

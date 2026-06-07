@@ -1,8 +1,16 @@
-/* Viaticum Phase 1.7 */
+/* Viaticum Phase 1.9 */
 
-/* Make it clear there is only one override file loaded. index.html loads this as phase1-fix.css?v=1.7.0 */
+/* Main desktop: middle column +5%, schedule column -5%. */
+.main-screen .main-dashboard-grid,
+.main-dashboard-grid,
+.main-dashboard-grid.main-dashboard-grid-three {
+  display: grid !important;
+  grid-template-columns: minmax(280px, 1fr) minmax(340px, 1.15fr) minmax(260px, .85fr) !important;
+  gap: 16px !important;
+  align-items: stretch !important;
+}
 
-/* Month selector: no grey/white native button background. */
+/* Month selector: kill the grey native button background. */
 .month-header .month-picker-button,
 .compact-month-header .month-picker-button,
 button.month-picker-button,
@@ -31,16 +39,6 @@ button.month-picker-button,
 .month-picker-button::before,
 .month-picker-button::after {
   display: none !important;
-}
-
-/* Main dashboard columns. */
-.main-screen .main-dashboard-grid,
-.main-dashboard-grid,
-.main-dashboard-grid.main-dashboard-grid-three {
-  display: grid !important;
-  grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.05fr) minmax(280px, 1fr) !important;
-  gap: 16px !important;
-  align-items: stretch !important;
 }
 
 .main-middle-stack {
@@ -101,14 +99,12 @@ button.month-picker-button,
     overflow: hidden !important;
   }
 
-  .day-dashboard-card {
-    flex: 0 0 38% !important;
-    max-height: 38% !important;
-  }
-
+  /* Main middle column should be 50:50 vertical split. */
+  .day-dashboard-card,
   .details-under-day,
   .details-dashboard-card {
-    flex: 1 1 auto !important;
+    flex: 1 1 50% !important;
+    max-height: none !important;
     min-height: 0 !important;
   }
 
@@ -159,7 +155,7 @@ button.month-picker-button,
   }
 }
 
-/* Force Details content itself to fit and scroll inside its card. */
+/* Details content should actually scroll inside its card. */
 .details-under-day .preview-panel,
 .details-dashboard-card .preview-panel,
 .details-panel {
@@ -182,7 +178,7 @@ button.month-picker-button,
   overflow-x: hidden !important;
 }
 
-/* Desktop Day screen 2-column layout. */
+/* Desktop Day screen 2-column layout, forced 50:50. */
 @media (min-width: 900px) {
   .day-screen {
     max-width: 1180px !important;
@@ -206,8 +202,8 @@ button.month-picker-button,
     min-height: 0 !important;
     overflow: hidden !important;
     display: grid !important;
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr) !important;
-    grid-template-rows: minmax(0, 1fr) minmax(0, .72fr) !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) !important;
     gap: 14px !important;
     align-items: stretch !important;
   }
@@ -248,7 +244,33 @@ button.month-picker-button,
   }
 }
 
-/* Date is one visible label with hidden date input on top. */
+/* Status/booked pill before event name. */
+.day-event-status-line {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+  margin-top: 4px !important;
+}
+
+.day-event-status-line .status-chips,
+.day-event-status-line .status-chip {
+  order: 1 !important;
+}
+
+.day-event-line {
+  order: 2 !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+}
+
+.preview-click-header .status-chips,
+.preview-click-header .status-chip {
+  margin-right: 6px !important;
+}
+
+/* Visible date with hidden native date input. */
 .day-date-control {
   position: relative !important;
   display: inline-block !important;
@@ -277,26 +299,6 @@ button.month-picker-button,
   opacity: 0 !important;
   cursor: pointer !important;
   z-index: 2 !important;
-}
-
-.day-event-status-line {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  flex-wrap: wrap !important;
-  margin-top: 4px !important;
-}
-
-.day-event-status-line .status-chips,
-.day-event-status-line .status-chip {
-  order: 1 !important;
-}
-
-.day-event-line {
-  order: 2 !important;
-  color: #ffffff !important;
-  font-weight: 900 !important;
-  line-height: 1.1 !important;
 }
 
 /* Toolbar stays horizontal. */
@@ -330,7 +332,7 @@ button.month-picker-button,
   margin-left: auto !important;
 }
 
-/* File tiles horizontal when they fit, wrap only if needed. */
+/* Day files horizontal when they fit. */
 .links-grid,
 .file-grid,
 .section-card.files .links-grid,
@@ -354,37 +356,6 @@ button.month-picker-button,
   width: auto !important;
   min-width: 96px !important;
   max-width: 160px !important;
-}
-
-/* Details vertical sections and pills. */
-.details-grid,
-.vtm-details-stack {
-  display: flex !important;
-  flex-direction: column !important;
-  width: 100% !important;
-}
-
-.vtm-detail-divider {
-  width: 100% !important;
-  border: 0 !important;
-  border-top: 1px solid rgba(0,0,0,.12) !important;
-  margin: 14px 0 !important;
-}
-
-.details-under-day .vtm-pill-list,
-.day-dashboard-card .vtm-pill-list,
-.day-content-two-col .vtm-pill-list {
-  flex-direction: column !important;
-  flex-wrap: nowrap !important;
-  align-items: stretch !important;
-}
-
-.details-under-day .vtm-detail-pill,
-.day-dashboard-card .vtm-detail-pill,
-.day-content-two-col .vtm-detail-pill {
-  width: 100% !important;
-  justify-content: flex-start !important;
-  text-align: left !important;
 }
 
 /* Trip collapsed days gold until expanded. */
@@ -416,5 +387,5 @@ button.month-picker-button,
 }
 
 .settings-version::after {
-  content: " · scroll/image fix" !important;
+  content: " · split/status/image fix" !important;
 }
