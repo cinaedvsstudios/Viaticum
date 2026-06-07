@@ -7,7 +7,7 @@ import { scheduleTimeline } from '../components/scheduleTimeline.js';
 import { detailsGrid } from '../components/detailsGrid.js';
 import { linksGrid } from '../components/linksGrid.js';
 import { sectionCard } from '../components/sectionCard.js';
-import { imageBox, findEventImage } from '../components/imageBox.js';
+import { imageBox, findEventImage, findLocationImage } from '../components/imageBox.js';
 import { iconButton } from '../components/iconButton.js';
 import { pushRoute, goMain } from '../router/history.js';
 import { sheetUrl } from '../config.js';
@@ -33,8 +33,10 @@ export function renderDayScreen() {
       toolbar(entry),
       el('section', { class: 'day-content day-content-two-col' },
         entry.schedule ? sectionCard('SCHEDULE', scheduleTimeline(entry.schedule, state.refData), 'section-card schedule') : '',
-        entry.details ? sectionCard('DETAILS', detailsGrid(entry.details, state.refData), 'section-card details') : '',
-        entry.links ? sectionCard('DAY FILES', linksGrid(entry.links, state.refData), 'section-card files') : ''
+        el('section', { class: 'day-right-stack' },
+          entry.details ? sectionCard('DETAILS', detailsGrid(entry.details, state.refData), 'section-card details') : '',
+          entry.links ? sectionCard('DAY FILES', linksGrid(entry.links, state.refData), 'section-card files') : ''
+        )
       )
     ),
     bottomNav(state.refData, {
@@ -56,6 +58,13 @@ export function renderDayScreen() {
   return root;
 }
 
+function dayImageCandidates(entry) {
+  return [
+    ...findEventImage(entry, state.refData),
+    ...findLocationImage(entry, state.refData)
+  ];
+}
+
 function header(entry) {
   return el('header', { class: 'day-header' },
     el('div', { class: 'day-header-text' },
@@ -75,7 +84,7 @@ function header(entry) {
         entry.event ? el('span', { class: 'day-event-line' }, entry.event) : ''
       )
     ),
-    imageBox(findEventImage(entry, state.refData), entry.event)
+    imageBox(dayImageCandidates(entry), entry.event || entry.location)
   );
 }
 

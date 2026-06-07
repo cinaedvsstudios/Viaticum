@@ -1,0 +1,191 @@
+/* Viaticum Phase 1.9.4 — Day screen only.
+   Desktop: 2 columns. Mobile: unchanged 1 column.
+   Also hides the native date input while keeping it clickable through the visible date text.
+*/
+
+@media (min-width: 900px) {
+  .day-screen {
+    max-width: 1180px !important;
+    width: min(1180px, calc(100vw - 36px)) !important;
+    height: 100dvh !important;
+    overflow: hidden !important;
+    margin: 0 auto !important;
+    padding: 16px 18px calc(var(--nav-height, 72px) + 14px) !important;
+    box-sizing: border-box !important;
+  }
+
+  .day-shell {
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .day-header,
+  .day-toolbar {
+    flex: 0 0 auto !important;
+  }
+
+  .day-content-two-col {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: stretch !important;
+  }
+
+  .day-content-two-col > .section-card.schedule {
+    grid-column: 1 / 2 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    margin: 0 !important;
+    scrollbar-gutter: stable !important;
+  }
+
+  .day-right-stack {
+    grid-column: 2 / 3 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+
+  .day-right-stack > .section-card.details,
+  .day-right-stack > .section-card.files {
+    flex: 1 1 50% !important;
+    height: calc(50% - 7px) !important;
+    min-height: 0 !important;
+    max-height: calc(50% - 7px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    margin: 0 !important;
+    scrollbar-gutter: stable !important;
+  }
+}
+
+/* Mobile day screen stays vertical and scrolls normally. */
+@media (max-width: 899px) {
+  .day-screen {
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow: visible !important;
+  }
+
+  .day-shell,
+  .day-content-two-col,
+  .day-right-stack {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .day-content-two-col > .section-card,
+  .day-right-stack > .section-card {
+    margin-bottom: 14px !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+
+/* Date: show formatted date once, keep hidden native date picker clickable. */
+.day-date-control {
+  position: relative !important;
+  display: inline-block !important;
+  cursor: pointer !important;
+  max-width: max-content !important;
+}
+
+.day-date-display {
+  display: inline-block !important;
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  color: #ffffff !important;
+  line-height: 1.15 !important;
+  pointer-events: none !important;
+}
+
+.day-date-display::after {
+  content: " ▾";
+  font-size: .72em;
+  opacity: .85;
+}
+
+/* This is the fix for the duplicate visible browser date field. */
+.day-date-native,
+.day-header input[type="date"],
+.day-header .day-date-control input[type="date"] {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 0 !important;
+  color: transparent !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-size: 0 !important;
+  cursor: pointer !important;
+  z-index: 2 !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+.day-header input[type="date"]::-webkit-calendar-picker-indicator {
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 0 !important;
+  cursor: pointer !important;
+}
+
+/* Header event row remains: location, then booked/status pill, then event. */
+.day-event-status-line {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+  margin-top: 4px !important;
+}
+
+.day-event-status-line .status-chips,
+.day-event-status-line .status-chip {
+  order: 1 !important;
+}
+
+.day-event-line {
+  order: 2 !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+}
+
+/* Day Files horizontal when there is room. */
+.day-right-stack .section-card.files .links-grid,
+.day-right-stack .section-card.files .file-grid,
+.day-right-stack .section-card.files > div:not(.section-header) {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+}
+
+.day-right-stack .section-card.files a,
+.day-right-stack .section-card.files button,
+.day-right-stack .section-card.files .file-card,
+.day-right-stack .section-card.files .link-card {
+  flex: 0 1 130px !important;
+  width: auto !important;
+  min-width: 96px !important;
+  max-width: 160px !important;
+}
