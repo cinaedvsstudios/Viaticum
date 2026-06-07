@@ -1,9 +1,5 @@
-/* Viaticum Phase 1.4
-   Forces the main screen to 3 columns, puts Details under Day, removes the grey month button,
-   and makes the version visible in Settings.
-*/
+/* Viaticum Phase 1.5: Day toolbar + Android-style Details fix. */
 
-/* Kill the old 4-column dashboard shape, even if responsive.css is cached or older. */
 .main-screen .main-dashboard-grid,
 .main-dashboard-grid,
 .main-dashboard-grid.main-dashboard-grid-three {
@@ -21,74 +17,230 @@
   min-height: 0 !important;
 }
 
-.main-dashboard-grid > .details-dashboard-card {
-  display: none !important;
+.preview-toolbar,
+.day-toolbar,
+.toolbar.preview-toolbar,
+.day-dashboard-card .toolbar,
+.day-screen .toolbar {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  width: 100% !important;
+  padding: 10px 0 !important;
+  border-bottom: 2px solid #1e9af0 !important;
 }
 
-.main-dashboard-grid > .day-dashboard-card {
-  display: none !important;
-}
-
-.details-under-day,
-.day-dashboard-card,
-.calendar-dashboard-card,
-.schedule-dashboard-card {
+.preview-toolbar .toolbar-left,
+.preview-toolbar .toolbar-right,
+.day-toolbar .toolbar-left,
+.day-toolbar .toolbar-right,
+.toolbar-left,
+.toolbar-right {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 12px !important;
   min-width: 0 !important;
 }
 
-.details-under-day .dashboard-card-title {
-  margin: 0 0 12px !important;
+.preview-toolbar .toolbar-right,
+.toolbar-right {
+  margin-left: auto !important;
 }
 
-.details-under-day .preview-scroll,
-.details-under-day-scroll {
-  max-height: none !important;
-  overflow: visible !important;
-  padding-right: 0 !important;
+.preview-toolbar button,
+.preview-toolbar .icon-button,
+.preview-toolbar [role="button"],
+.day-toolbar button,
+.toolbar-left button,
+.toolbar-right button {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 28px !important;
+  max-width: none !important;
+  height: auto !important;
+  padding: 2px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
-.details-under-day .details-grid,
-.details-under-day .links-grid,
-.details-under-day .file-grid,
-.details-under-day .map-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+.details-grid,
+.vtm-details-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
-.details-under-day .section-card {
-  margin-top: 12px !important;
+.vtm-detail-section {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
 }
 
-/* Month selector: remove grey/white pill completely. */
-.month-header .month-picker-button,
-.compact-month-header .month-picker-button,
-button.month-picker-button,
-.month-picker-button,
-.month-picker-button:enabled,
-.month-picker-button:hover,
-.month-picker-button:focus,
-.month-picker-button:active {
-  background: transparent !important;
-  background-color: transparent !important;
-  color: #ffffff !important;
+.vtm-info-lines {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+.vtm-info-line {
+  margin: 0 !important;
+  font-size: 14px !important;
+  line-height: 1.35 !important;
+  font-weight: 600 !important;
+  color: #111 !important;
+  max-width: 100% !important;
+  overflow-wrap: anywhere !important;
+}
+
+.vtm-detail-divider {
+  width: 100% !important;
   border: 0 !important;
-  box-shadow: none !important;
-  outline: none !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,.25) !important;
-  -webkit-appearance: none !important;
-  appearance: none !important;
+  border-top: 1px solid rgba(0,0,0,.12) !important;
+  margin: 14px 0 !important;
 }
 
-.month-picker-button *,
-.month-picker-caret {
-  color: #ffffff !important;
+.vtm-detail-heading {
+  margin: 0 0 8px !important;
+  font-size: 12px !important;
+  line-height: 1.1 !important;
+  font-weight: 900 !important;
+  color: rgba(0,0,0,.48) !important;
+  letter-spacing: .02em !important;
 }
 
-.month-picker-button::before,
-.month-picker-button::after {
-  display: none !important;
+.vtm-pill-list {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  align-items: stretch !important;
+  width: 100% !important;
 }
 
-/* Desktop/web: no whole-page scroll; individual cards scroll. */
+.vtm-detail-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  min-height: 24px !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  padding: 4px 10px !important;
+  border-radius: 10px !important;
+  font-size: 11px !important;
+  line-height: 1.1 !important;
+  font-weight: 800 !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
+  overflow-wrap: anywhere !important;
+}
+
+.vtm-paid-pill {
+  color: #258a36 !important;
+  border: 2px solid #4caf50 !important;
+  background: #f3fff4 !important;
+}
+
+.vtm-unpaid-pill {
+  color: #d1281e !important;
+  border: 2px solid #f44336 !important;
+  background: #fff6f4 !important;
+}
+
+.vtm-pill-icon {
+  flex: 0 0 auto !important;
+  font-size: 11px !important;
+}
+
+.vtm-pill-text {
+  min-width: 0 !important;
+  overflow-wrap: anywhere !important;
+}
+
+.vtm-map-list,
+.vtm-code-list {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.vtm-map-card,
+.vtm-map-card-button {
+  width: 110px !important;
+  min-height: 76px !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: rgba(0,0,0,.06) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  padding: 8px !important;
+  box-sizing: border-box !important;
+  color: #111 !important;
+  font: inherit !important;
+  text-align: center !important;
+}
+
+.vtm-map-card-button {
+  cursor: pointer !important;
+}
+
+.vtm-map-icon {
+  font-size: 24px !important;
+}
+
+.vtm-map-title {
+  font-size: 10px !important;
+  line-height: 1.1 !important;
+  font-weight: 800 !important;
+  max-width: 100% !important;
+  overflow-wrap: anywhere !important;
+}
+
+.vtm-code-pill {
+  padding: 5px 9px !important;
+  border-radius: 8px !important;
+  background: rgba(33,150,243,.12) !important;
+  border: 1px solid rgba(33,150,243,.45) !important;
+  color: #1565c0 !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+
+.details-under-day .vtm-pill-list,
+.day-dashboard-card .vtm-pill-list {
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+}
+
+.details-under-day .vtm-detail-pill,
+.day-dashboard-card .vtm-detail-pill {
+  width: 100% !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
+
+.section-card.details,
+.details-under-day .section-card.details {
+  padding: 18px !important;
+}
+
+.settings-version::after {
+  content: " · details/toolbar fix" !important;
+}
+
 @media (min-width: 701px) {
   html,
   body {
@@ -133,15 +285,6 @@ button.month-picker-button,
     flex-direction: column !important;
   }
 
-  .calendar-dashboard-card .month-header,
-  .day-dashboard-card .preview-click-header,
-  .day-dashboard-card .preview-toolbar,
-  .schedule-dashboard-card .schedule-list > h2,
-  .schedule-dashboard-card .schedule-head,
-  .details-dashboard-card .dashboard-card-title {
-    flex: 0 0 auto !important;
-  }
-
   .calendar-dashboard-card .calendar-card,
   .day-dashboard-card .day-card-schedule-preview,
   .details-dashboard-card .preview-scroll,
@@ -168,31 +311,12 @@ button.month-picker-button,
 
   .day-dashboard-card {
     flex: 0 1 auto !important;
-    max-height: 56% !important;
+    max-height: 48% !important;
   }
 
   .details-under-day {
     flex: 1 1 auto !important;
-    min-height: 180px !important;
-  }
-
-  .bottom-nav,
-  nav.bottom-nav {
-    position: fixed !important;
-  }
-}
-
-@media (min-width: 1100px) {
-  #app.app-shell,
-  #app,
-  .app-shell,
-  .screen {
-    max-width: 1480px !important;
-  }
-
-  .main-screen {
-    padding-left: 18px !important;
-    padding-right: 18px !important;
+    min-height: 220px !important;
   }
 }
 
@@ -209,46 +333,31 @@ button.month-picker-button,
   }
 }
 
-/* Mobile remains vertical: Calendar -> Day/Details -> Schedule. */
 @media (max-width: 700px) {
-  html,
-  body,
-  #app.app-shell,
-  #app,
-  .app-shell,
-  .screen.main-screen,
-  .main-screen {
-    height: auto !important;
-    min-height: 100dvh !important;
-    overflow: visible !important;
+  .preview-toolbar,
+  .day-toolbar,
+  .toolbar.preview-toolbar {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
   }
 
-  .main-screen .main-dashboard-grid,
-  .main-dashboard-grid,
-  .main-dashboard-grid.main-dashboard-grid-three {
-    display: flex !important;
+  .preview-toolbar .toolbar-left,
+  .preview-toolbar .toolbar-right,
+  .toolbar-left,
+  .toolbar-right {
+    gap: 8px !important;
+  }
+
+  .vtm-pill-list {
     flex-direction: column !important;
-    gap: 14px !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
   }
 
-  .calendar-dashboard-card {
-    order: 1 !important;
+  .vtm-detail-pill {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
   }
-
-  .main-middle-stack {
-    order: 2 !important;
-  }
-
-  .schedule-dashboard-card {
-    order: 3 !important;
-  }
-}
-
-.settings-version {
-  margin: 16px 0 0 !important;
-  padding-top: 12px !important;
-  border-top: 1px solid rgba(0,0,0,.12) !important;
-  color: rgba(0,0,0,.55) !important;
-  font-size: 12px !important;
-  text-align: center !important;
 }

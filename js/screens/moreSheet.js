@@ -3,7 +3,7 @@ import { el, button } from '../utils/dom.js';
 import { signIn, signOut, hasClientId } from '../services/googleAuth.js';
 import { syncAll } from '../services/syncService.js';
 
-const WEB_VERSION = 'Viaticum Web v1.4.0 — 3-column layout + month selector fix';
+const WEB_VERSION = 'Viaticum Web v1.5.0 — details + day toolbar fix';
 
 export function renderMoreSheet() {
   return el('div', {
