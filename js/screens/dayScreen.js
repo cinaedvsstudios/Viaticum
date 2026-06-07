@@ -17,7 +17,15 @@ import { shareDayText } from '../features/dayFeature.js';
 import { attachHorizontalSwipe } from '../features/navigationFeature.js';
 
 export function renderDayScreen() {
-  const entry = entryByDate(state.selectedDate) || { date: state.selectedDate, location: '', event: '', status: '', schedule: '', details: '', links: '' };
+  const entry = entryByDate(state.selectedDate) || {
+    date: state.selectedDate,
+    location: '',
+    event: '',
+    status: '',
+    schedule: '',
+    details: '',
+    links: ''
+  };
 
   const root = el('main', { class: 'screen day-screen' },
     el('section', { class: 'day-shell' },
@@ -39,7 +47,12 @@ export function renderDayScreen() {
     }, 'day')
   );
 
-  attachHorizontalSwipe(root, () => setState({ selectedDate: addDays(state.selectedDate, 1) }), () => setState({ selectedDate: addDays(state.selectedDate, -1) }));
+  attachHorizontalSwipe(
+    root,
+    () => setState({ selectedDate: addDays(state.selectedDate, 1) }),
+    () => setState({ selectedDate: addDays(state.selectedDate, -1) })
+  );
+
   return root;
 }
 
@@ -48,11 +61,19 @@ function header(entry) {
     el('div', { class: 'day-header-text' },
       el('label', { class: 'day-date-control' },
         el('span', { class: 'day-date-display' }, formatLong(entry.date)),
-        el('input', { class: 'day-date-native', type: 'date', value: entry.date, onChange: e => setState({ selectedDate: e.target.value }), ariaLabel: 'Change date' })
+        el('input', {
+          class: 'day-date-native',
+          type: 'date',
+          value: entry.date,
+          onChange: e => setState({ selectedDate: e.target.value }),
+          ariaLabel: 'Change date'
+        })
       ),
       entry.location ? el('h2', {}, `${state.refData.locations[entry.location] || '📍'} ${entry.location}`) : '',
-      entry.event ? el('p', { class: 'day-event-line' }, entry.event) : '',
-      statusChips(entry.status, state.refData)
+      entry.event ? el('div', { class: 'day-event-status-line' },
+        statusChips(entry.status, state.refData),
+        el('span', { class: 'day-event-line' }, entry.event)
+      ) : statusChips(entry.status, state.refData)
     ),
     imageBox(findEventImage(entry, state.refData), entry.event)
   );

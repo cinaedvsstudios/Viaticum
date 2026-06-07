@@ -3,7 +3,7 @@ import { el, button } from '../utils/dom.js';
 import { signIn, signOut, hasClientId } from '../services/googleAuth.js';
 import { syncAll } from '../services/syncService.js';
 
-const WEB_VERSION = 'Viaticum Web v1.6.1 — emergency blank-screen fix';
+const WEB_VERSION = 'Viaticum Web v1.7.0 — scroll + image flicker fix';
 
 export function renderMoreSheet() {
   return el('div', {

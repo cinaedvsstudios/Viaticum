@@ -1,5 +1,8 @@
-/* Viaticum Phase 1.6 */
+/* Viaticum Phase 1.7 */
 
+/* Make it clear there is only one override file loaded. index.html loads this as phase1-fix.css?v=1.7.0 */
+
+/* Month selector: no grey/white native button background. */
 .month-header .month-picker-button,
 .compact-month-header .month-picker-button,
 button.month-picker-button,
@@ -30,6 +33,7 @@ button.month-picker-button,
   display: none !important;
 }
 
+/* Main dashboard columns. */
 .main-screen .main-dashboard-grid,
 .main-dashboard-grid,
 .main-dashboard-grid.main-dashboard-grid-three {
@@ -47,6 +51,7 @@ button.month-picker-button,
   min-height: 0 !important;
 }
 
+/* Desktop main: freeze page, scroll individual boxes. */
 @media (min-width: 701px) {
   html,
   body {
@@ -91,11 +96,26 @@ button.month-picker-button,
     flex-direction: column !important;
   }
 
+  .main-middle-stack {
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .day-dashboard-card {
+    flex: 0 0 38% !important;
+    max-height: 38% !important;
+  }
+
+  .details-under-day,
+  .details-dashboard-card {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+
   .calendar-dashboard-card .calendar-card,
-  .day-dashboard-card .day-card-schedule-preview,
+  .schedule-dashboard-card .schedule-table,
   .details-dashboard-card .preview-scroll,
-  .details-under-day-scroll,
-  .schedule-dashboard-card .schedule-table {
+  .details-under-day-scroll {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     max-height: none !important;
@@ -112,22 +132,57 @@ button.month-picker-button,
     overflow: hidden !important;
   }
 
-  .main-middle-stack {
+  .day-dashboard-card .preview-panel,
+  .day-dashboard-card .main-day-card {
     height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
     overflow: hidden !important;
   }
 
-  .day-dashboard-card {
-    flex: 0 1 auto !important;
-    max-height: 48% !important;
+  .day-dashboard-card .preview-click-header,
+  .day-dashboard-card .preview-toolbar {
+    flex: 0 0 auto !important;
   }
 
-  .details-under-day {
+  .day-dashboard-card .day-card-schedule-preview,
+  .day-dashboard-card .day-card-schedule-preview .section-card,
+  .day-dashboard-card .section-card.schedule {
     flex: 1 1 auto !important;
-    min-height: 220px !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-gutter: stable !important;
   }
 }
 
+/* Force Details content itself to fit and scroll inside its card. */
+.details-under-day .preview-panel,
+.details-dashboard-card .preview-panel,
+.details-panel {
+  height: 100% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.details-under-day .dashboard-card-title {
+  flex: 0 0 auto !important;
+}
+
+.details-under-day .preview-scroll,
+.details-under-day-scroll {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Desktop Day screen 2-column layout. */
 @media (min-width: 900px) {
   .day-screen {
     max-width: 1180px !important;
@@ -152,13 +207,14 @@ button.month-picker-button,
     overflow: hidden !important;
     display: grid !important;
     grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr) !important;
-    grid-template-rows: minmax(0, 1fr) minmax(0, .7fr) !important;
+    grid-template-rows: minmax(0, 1fr) minmax(0, .72fr) !important;
     gap: 14px !important;
     align-items: stretch !important;
   }
 
   .day-content-two-col .section-card {
     min-height: 0 !important;
+    max-height: none !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     margin: 0 !important;
@@ -192,6 +248,7 @@ button.month-picker-button,
   }
 }
 
+/* Date is one visible label with hidden date input on top. */
 .day-date-control {
   position: relative !important;
   display: inline-block !important;
@@ -222,12 +279,27 @@ button.month-picker-button,
   z-index: 2 !important;
 }
 
-.day-event-line {
-  margin: 4px 0 0 !important;
-  color: #ffffff !important;
-  font-weight: 800 !important;
+.day-event-status-line {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+  margin-top: 4px !important;
 }
 
+.day-event-status-line .status-chips,
+.day-event-status-line .status-chip {
+  order: 1 !important;
+}
+
+.day-event-line {
+  order: 2 !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+}
+
+/* Toolbar stays horizontal. */
 .preview-toolbar,
 .day-toolbar,
 .toolbar.preview-toolbar,
@@ -258,10 +330,12 @@ button.month-picker-button,
   margin-left: auto !important;
 }
 
+/* File tiles horizontal when they fit, wrap only if needed. */
 .links-grid,
 .file-grid,
 .section-card.files .links-grid,
-.section-card.files .file-grid {
+.section-card.files .file-grid,
+.section-card.files > div:not(.section-header) {
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: wrap !important;
@@ -273,13 +347,16 @@ button.month-picker-button,
 .links-grid > *,
 .file-grid > *,
 .section-card.files .file-card,
-.section-card.files .link-card {
+.section-card.files .link-card,
+.section-card.files a,
+.section-card.files button {
   flex: 0 1 130px !important;
   width: auto !important;
   min-width: 96px !important;
   max-width: 160px !important;
 }
 
+/* Details vertical sections and pills. */
 .details-grid,
 .vtm-details-stack {
   display: flex !important;
@@ -310,6 +387,7 @@ button.month-picker-button,
   text-align: left !important;
 }
 
+/* Trip collapsed days gold until expanded. */
 .trip-day:not(.open) .trip-card {
   background: #fff8cf !important;
   border-color: #ffb300 !important;
@@ -338,5 +416,5 @@ button.month-picker-button,
 }
 
 .settings-version::after {
-  content: " · day/trip layout fix" !important;
+  content: " · scroll/image fix" !important;
 }
