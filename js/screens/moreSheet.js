@@ -9,7 +9,7 @@ import {
 } from '../services/googleAuth.js';
 import { syncAll } from '../services/syncService.js';
 
-const WEB_VERSION = 'Viaticum Web v1.9.2 — toolbar restore fix';
+const WEB_VERSION = 'Viaticum Web v1.9.3 — 55/45 details scroll hotfix';
 
 function yesNo(value) {
   return value ? 'yes' : 'no';

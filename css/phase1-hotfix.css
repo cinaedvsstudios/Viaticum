@@ -1,0 +1,135 @@
+/* Viaticum Phase 1.9.3 hotfix
+   Loaded AFTER phase1-fix.css so it only overrides the broken main middle split/scroll.
+   Does not touch toolbar placement or booked-pill markup.
+*/
+
+@media (min-width: 701px) {
+  .main-middle-stack {
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    gap: 16px !important;
+  }
+
+  /* Requested split: upper Day box 55%, lower Details box 45%. */
+  .main-middle-stack > .day-dashboard-card {
+    flex: 0 0 calc(55% - 8px) !important;
+    height: calc(55% - 8px) !important;
+    max-height: calc(55% - 8px) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .main-middle-stack > .details-dashboard-card,
+  .main-middle-stack > .details-under-day {
+    flex: 0 0 calc(45% - 8px) !important;
+    height: calc(45% - 8px) !important;
+    max-height: calc(45% - 8px) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Day card: header + toolbar fixed, yellow schedule preview scrolls. */
+  .day-dashboard-card .preview-panel,
+  .day-dashboard-card .main-day-card {
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  .day-dashboard-card .preview-click-header,
+  .day-dashboard-card .preview-toolbar,
+  .day-dashboard-card .toolbar {
+    flex: 0 0 auto !important;
+  }
+
+  .day-dashboard-card .day-card-schedule-preview {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .day-dashboard-card .day-card-schedule-preview .section-card,
+  .day-dashboard-card .day-card-schedule-preview .section-card.schedule {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-gutter: stable !important;
+  }
+
+  /* Details card: title fixed, inner content scrolls. */
+  .details-dashboard-card .preview-panel,
+  .details-under-day .preview-panel,
+  .details-panel {
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  .details-dashboard-card .dashboard-card-title,
+  .details-under-day .dashboard-card-title {
+    flex: 0 0 auto !important;
+  }
+
+  .details-dashboard-card .preview-scroll,
+  .details-under-day .preview-scroll,
+  .details-dashboard-card .details-under-day-scroll,
+  .details-under-day-scroll {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-right: 6px !important;
+    scrollbar-gutter: stable !important;
+  }
+
+  /* Stop the inner details card from forcing the outer card taller than its 45%. */
+  .details-under-day .section-card,
+  .details-dashboard-card .section-card {
+    max-height: none !important;
+    min-height: 0 !important;
+  }
+}
+
+/* Keep toolbar horizontal. This is repeated here so future local cascade weirdness cannot flip it again. */
+.preview-toolbar,
+.toolbar.preview-toolbar,
+.day-dashboard-card .preview-toolbar,
+.day-dashboard-card .toolbar,
+.day-toolbar,
+.day-screen .toolbar {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+}
+
+.preview-toolbar .toolbar-left,
+.preview-toolbar .toolbar-right,
+.toolbar-left,
+.toolbar-right {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  width: auto !important;
+}
+
+.toolbar-right,
+.preview-toolbar .toolbar-right {
+  margin-left: auto !important;
+}
