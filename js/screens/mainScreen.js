@@ -30,19 +30,21 @@ export function renderMainScreen() {
 
   const root = el('main', { class: 'screen main-screen' },
     loadingBanner(state),
-    el('div', { class: 'main-dashboard-grid' },
+    el('div', { class: 'main-dashboard-grid main-dashboard-grid-three' },
       el('section', { class: 'dashboard-card calendar-dashboard-card' },
         header(),
         calendar()
       ),
-      el('section', { class: 'dashboard-card day-dashboard-card' },
-        dayPanel(selected)
+      el('section', { class: 'main-middle-stack' },
+        el('section', { class: 'dashboard-card day-dashboard-card' },
+          dayPanel(selected)
+        ),
+        el('section', { class: 'dashboard-card details-dashboard-card details-under-day' },
+          detailsPanel(selected)
+        )
       ),
       el('section', { class: 'dashboard-card schedule-dashboard-card' },
         scheduleList()
-      ),
-      el('section', { class: 'dashboard-card details-dashboard-card' },
-        detailsPanel(selected)
       )
     ),
     state.modal === 'month-picker' ? monthPickerModal() : '',
@@ -172,7 +174,7 @@ function dayPanel(entry) {
 function detailsPanel(entry) {
   return el('section', { class: 'preview-panel details-panel' },
     el('h2', { class: 'dashboard-card-title' }, 'Details'),
-    el('div', { class: 'preview-scroll' },
+    el('div', { class: 'preview-scroll details-under-day-scroll' },
       entry.details ? sectionCard('DETAILS', detailsGrid(entry.details, state.refData), 'section-card details') : '',
       entry.links ? sectionCard('DAY FILES', linksGrid(entry.links, state.refData), 'section-card files') : '',
       !entry.details && !entry.links ? el('p', { class: 'muted no-details' }, 'No details or files for selected day.') : ''

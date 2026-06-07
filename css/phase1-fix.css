@@ -1,32 +1,46 @@
-/* Phase 1.2: desktop section scrolling + readable month button.
-   Load this after responsive.css. This file also keeps the Phase 1.1 3-column layout.
+/* Viaticum Phase 1.4
+   Forces the main screen to 3 columns, puts Details under Day, removes the grey month button,
+   and makes the version visible in Settings.
 */
 
+/* Kill the old 4-column dashboard shape, even if responsive.css is cached or older. */
+.main-screen .main-dashboard-grid,
+.main-dashboard-grid,
 .main-dashboard-grid.main-dashboard-grid-three {
-  grid-template-columns:
-    minmax(280px, 1fr)
-    minmax(320px, 1.05fr)
-    minmax(280px, 1fr) !important;
+  display: grid !important;
+  grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.05fr) minmax(280px, 1fr) !important;
   gap: 16px !important;
   align-items: stretch !important;
 }
 
 .main-middle-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-  min-height: 0;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
 }
 
-.details-under-day {
-  min-height: 0;
+.main-dashboard-grid > .details-dashboard-card {
+  display: none !important;
+}
+
+.main-dashboard-grid > .day-dashboard-card {
+  display: none !important;
+}
+
+.details-under-day,
+.day-dashboard-card,
+.calendar-dashboard-card,
+.schedule-dashboard-card {
+  min-width: 0 !important;
 }
 
 .details-under-day .dashboard-card-title {
-  margin-bottom: 12px;
+  margin: 0 0 12px !important;
 }
 
+.details-under-day .preview-scroll,
 .details-under-day-scroll {
   max-height: none !important;
   overflow: visible !important;
@@ -44,49 +58,42 @@
   margin-top: 12px !important;
 }
 
-.schedule-dashboard-card {
-  min-height: 0 !important;
-}
-
-.calendar-dashboard-card,
-.day-dashboard-card,
-.details-dashboard-card,
-.schedule-dashboard-card {
-  align-self: stretch;
-}
-
-/* Month selector fix: the text was becoming white-on-grey / low contrast. */
-.month-picker-button {
-  background: transparent !important;
-  color: #ffffff !important;
-  box-shadow: none !important;
-  border: 0 !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,.22);
-}
-
+/* Month selector: remove grey/white pill completely. */
+.month-header .month-picker-button,
+.compact-month-header .month-picker-button,
+button.month-picker-button,
+.month-picker-button,
+.month-picker-button:enabled,
 .month-picker-button:hover,
-.month-picker-button:focus {
-  background: rgba(255,255,255,.16) !important;
-  outline: 2px solid rgba(255,255,255,.35);
-  outline-offset: 2px;
+.month-picker-button:focus,
+.month-picker-button:active {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #ffffff !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.25) !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
 }
 
+.month-picker-button *,
 .month-picker-caret {
   color: #ffffff !important;
 }
 
-/* Desktop/web app mode:
-   the page itself should stay fixed; each panel/card scrolls internally.
-*/
+.month-picker-button::before,
+.month-picker-button::after {
+  display: none !important;
+}
+
+/* Desktop/web: no whole-page scroll; individual cards scroll. */
 @media (min-width: 701px) {
   html,
   body {
-    height: 100%;
+    height: 100% !important;
     overflow: hidden !important;
-  }
-
-  body {
-    overscroll-behavior: none;
   }
 
   #app.app-shell,
@@ -102,22 +109,16 @@
     height: 100dvh !important;
     min-height: 0 !important;
     overflow: hidden !important;
-    box-sizing: border-box;
+    box-sizing: border-box !important;
     display: flex !important;
     flex-direction: column !important;
-    padding-bottom: calc(var(--nav-height) + 18px) !important;
+    padding-bottom: calc(var(--nav-height, 72px) + 18px) !important;
   }
 
-  .main-screen > .banner,
-  .main-screen > .loading-banner,
-  .main-screen > [class*="banner"] {
-    flex: 0 0 auto;
-  }
-
+  .main-dashboard-grid,
   .main-dashboard-grid.main-dashboard-grid-three {
-    flex: 1 1 auto;
-    min-height: 0;
-    height: auto !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
     overflow: hidden !important;
   }
 
@@ -132,76 +133,47 @@
     flex-direction: column !important;
   }
 
-  .calendar-dashboard-card .month-header {
-    flex: 0 0 auto;
-  }
-
-  .calendar-dashboard-card .calendar-card {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: auto !important;
-    scrollbar-gutter: stable;
-  }
-
-  .main-middle-stack {
-    height: 100%;
-    overflow: hidden;
-  }
-
-  .day-dashboard-card {
-    flex: 0 1 auto;
-    max-height: 56%;
-  }
-
-  .details-dashboard-card {
-    flex: 1 1 auto;
-    min-height: 180px !important;
-  }
-
-  .day-dashboard-card .preview-panel,
-  .details-dashboard-card .preview-panel,
-  .schedule-dashboard-card .schedule-list {
-    min-height: 0;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow: hidden !important;
-  }
-
+  .calendar-dashboard-card .month-header,
   .day-dashboard-card .preview-click-header,
   .day-dashboard-card .preview-toolbar,
   .schedule-dashboard-card .schedule-list > h2,
   .schedule-dashboard-card .schedule-head,
   .details-dashboard-card .dashboard-card-title {
-    flex: 0 0 auto;
+    flex: 0 0 auto !important;
   }
 
-  .day-dashboard-card .day-card-schedule-preview {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: auto !important;
-    padding-right: 4px;
-    scrollbar-gutter: stable;
-  }
-
+  .calendar-dashboard-card .calendar-card,
+  .day-dashboard-card .day-card-schedule-preview,
+  .details-dashboard-card .preview-scroll,
   .details-under-day-scroll,
-  .details-dashboard-card .preview-scroll {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: auto !important;
-    padding-right: 6px !important;
-    scrollbar-gutter: stable;
-  }
-
   .schedule-dashboard-card .schedule-table {
-    flex: 1 1 auto;
-    min-height: 0;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
     overflow: auto !important;
-    padding-right: 6px;
-    scrollbar-gutter: stable;
+    scrollbar-gutter: stable !important;
   }
 
   .schedule-dashboard-card .schedule-list {
-    height: 100%;
+    height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  .main-middle-stack {
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .day-dashboard-card {
+    flex: 0 1 auto !important;
+    max-height: 56% !important;
+  }
+
+  .details-under-day {
+    flex: 1 1 auto !important;
+    min-height: 180px !important;
   }
 
   .bottom-nav,
@@ -210,7 +182,6 @@
   }
 }
 
-/* Wider desktop: allow the 3 cards to breathe without stretching to absurd full browser width. */
 @media (min-width: 1100px) {
   #app.app-shell,
   #app,
@@ -225,26 +196,20 @@
   }
 }
 
-/* Tablet: two columns, schedule full width underneath, still internal scrolling. */
 @media (max-width: 1099px) and (min-width: 701px) {
+  .main-screen .main-dashboard-grid,
+  .main-dashboard-grid,
   .main-dashboard-grid.main-dashboard-grid-three {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
   }
 
   .schedule-dashboard-card {
-    grid-column: 1 / -1;
-    max-height: 34dvh;
-  }
-
-  .day-dashboard-card {
-    max-height: none;
+    grid-column: 1 / -1 !important;
+    max-height: 34dvh !important;
   }
 }
 
-/* Mobile:
-   keep normal vertical phone behaviour. Whole-page scrolling is OK on phone.
-   Order remains Calendar -> Day/Details -> Schedule.
-*/
+/* Mobile remains vertical: Calendar -> Day/Details -> Schedule. */
 @media (max-width: 700px) {
   html,
   body,
@@ -258,6 +223,8 @@
     overflow: visible !important;
   }
 
+  .main-screen .main-dashboard-grid,
+  .main-dashboard-grid,
   .main-dashboard-grid.main-dashboard-grid-three {
     display: flex !important;
     flex-direction: column !important;
@@ -265,21 +232,23 @@
   }
 
   .calendar-dashboard-card {
-    order: 1;
+    order: 1 !important;
   }
 
   .main-middle-stack {
-    order: 2;
+    order: 2 !important;
   }
 
   .schedule-dashboard-card {
-    order: 3;
+    order: 3 !important;
   }
+}
 
-  .details-under-day .details-grid,
-  .details-under-day .links-grid,
-  .details-under-day .file-grid,
-  .details-under-day .map-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  }
+.settings-version {
+  margin: 16px 0 0 !important;
+  padding-top: 12px !important;
+  border-top: 1px solid rgba(0,0,0,.12) !important;
+  color: rgba(0,0,0,.55) !important;
+  font-size: 12px !important;
+  text-align: center !important;
 }

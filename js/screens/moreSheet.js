@@ -3,6 +3,8 @@ import { el, button } from '../utils/dom.js';
 import { signIn, signOut, hasClientId } from '../services/googleAuth.js';
 import { syncAll } from '../services/syncService.js';
 
+const WEB_VERSION = 'Viaticum Web v1.4.0 — 3-column layout + month selector fix';
+
 export function renderMoreSheet() {
   return el('div', {
       class: 'modal-backdrop settings-backdrop',
@@ -34,7 +36,8 @@ export function renderMoreSheet() {
         el('section', { class: 'settings-section' },
           el('h3', {}, 'Appearance'),
           button(state.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode', () => setState({ isDarkMode: !state.isDarkMode }), 'btn settings-action')
-        )
+        ),
+        el('p', { class: 'settings-version' }, WEB_VERSION)
       )
     )
   );
