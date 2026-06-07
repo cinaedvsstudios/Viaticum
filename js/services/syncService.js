@@ -5,22 +5,20 @@ import { parseRefRows } from './refParser.js';
 import { parseEntryRows } from './entryParser.js';
 import { formatSheetDate } from '../utils/dates.js';
 import { blankEntry } from '../models.js';
+import {
+  assertTargetEntry,
+  dayDataRange,
+  clearDayRange,
+  tripCellRange,
+  dayWriteValues,
+  clearDayValues,
+  clearDayAndTripValues,
+  logWriteAudit
+} from './writeGuards.js';
 
 function upsertLocal(entry) {
   const exists = state.entries.some(e => e.rowIndex === entry.rowIndex);
   return exists ? state.entries.map(e => e.rowIndex === entry.rowIndex ? entry : e) : [...state.entries, entry];
-}
-
-function cleanEntryForSheet(entry) {
-  return [
-    entry.location || '',
-    entry.event || '',
-    entry.status || '',
-    entry.schedule || '',
-    entry.details || '',
-    entry.links || '',
-    entry.tripName || ''
-  ];
 }
 
 function clearEntryData(entry, includeTrip = false) {
@@ -36,6 +34,10 @@ function clearEntryData(entry, includeTrip = false) {
   };
 }
 
+function sortEntries(entries) {
+  return [...entries].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+}
+
 export async function syncAll() {
   setState({ isSyncing: true, error: '' });
 
@@ -47,7 +49,7 @@ export async function syncAll() {
 
     setState({
       refData: parseRefRows(refRows),
-      entries: parseEntryRows(entryRows),
+      entries: sortEntries(parseEntryRows(entryRows)),
       demoMode: false
     });
   } catch (e) {
@@ -62,47 +64,68 @@ export function entryForDate(iso) {
 }
 
 export async function saveDay(entry) {
-  const row = entry.rowIndex;
-  const values = [cleanEntryForSheet(entry)];
+  const row = assertTargetEntry(entry, 'save day');
+  const range = dayDataRange(row);
+  const values = [dayWriteValues(entry)];
 
-  setState({ entries: upsertLocal(entry), isSyncing: true });
+  logWriteAudit('saveDay', entry, { range, fields: 'C:I' });
+  setState({ entries: sortEntries(upsertLocal(entry)), isSyncing: true, error: '' });
 
   try {
-    await updateRange(`sheet1!C${row}:I${row}`, values);
+    await updateRange(range, values);
+  } catch (e) {
+    setState({ error: e.message || String(e) });
+    throw e;
   } finally {
     setState({ isSyncing: false });
   }
 }
 
 export async function clearDay(entry) {
+  const row = assertTargetEntry(entry, 'clear day');
+  const range = clearDayRange(row);
   const cleared = clearEntryData(entry, false);
-  setState({ entries: upsertLocal(cleared), isSyncing: true });
+
+  logWriteAudit('clearDay', entry, { range, fields: 'C:H only; date and trip preserved' });
+  setState({ entries: sortEntries(upsertLocal(cleared)), isSyncing: true, error: '' });
 
   try {
-    // Clear C:H only. This intentionally leaves the date column A and trip column I untouched.
-    await updateRange(`sheet1!C${entry.rowIndex}:H${entry.rowIndex}`, [['', '', '', '', '', '']]);
+    await updateRange(range, clearDayValues());
+  } catch (e) {
+    setState({ error: e.message || String(e) });
+    throw e;
   } finally {
     setState({ isSyncing: false });
   }
 }
 
 export async function moveDay(oldEntry, newEntry) {
-  setState({ isSyncing: true });
+  const oldRow = assertTargetEntry(oldEntry, 'move day from old row');
+  const newRow = assertTargetEntry(newEntry, 'move day to new row');
+  const oldRange = dayDataRange(oldRow);
+  const newRange = dayDataRange(newRow);
+
+  logWriteAudit('moveDay.clearOld', oldEntry, { range: oldRange, fields: 'C:I' });
+  logWriteAudit('moveDay.writeNew', newEntry, { range: newRange, fields: 'C:I' });
+
+  setState({ isSyncing: true, error: '' });
 
   try {
-    // Move clears C:I on the old row because the trip assignment moves with the day.
-    await updateRange(`sheet1!C${oldEntry.rowIndex}:I${oldEntry.rowIndex}`, [['', '', '', '', '', '', '']]);
-    await updateRange(`sheet1!C${newEntry.rowIndex}:I${newEntry.rowIndex}`, [cleanEntryForSheet(newEntry)]);
+    await updateRange(oldRange, clearDayAndTripValues());
+    await updateRange(newRange, [dayWriteValues(newEntry)]);
 
     setState({
-      entries: state.entries.map(e =>
+      entries: sortEntries(state.entries.map(e =>
         e.rowIndex === oldEntry.rowIndex
           ? clearEntryData(e, true)
           : e.rowIndex === newEntry.rowIndex
             ? newEntry
             : e
-      )
+      ))
     });
+  } catch (e) {
+    setState({ error: e.message || String(e) });
+    throw e;
   } finally {
     setState({ isSyncing: false });
   }
@@ -111,11 +134,18 @@ export async function moveDay(oldEntry, newEntry) {
 export const copyDay = saveDay;
 
 export async function updateTripCell(entry, tripName) {
-  const updated = { ...entry, tripName };
-  setState({ entries: upsertLocal(updated), isSyncing: true });
+  const row = assertTargetEntry(entry, 'update trip');
+  const range = tripCellRange(row);
+  const updated = { ...entry, tripName: String(tripName ?? '') };
+
+  logWriteAudit('updateTripCell', updated, { range, fields: 'I only' });
+  setState({ entries: sortEntries(upsertLocal(updated)), isSyncing: true, error: '' });
 
   try {
-    await updateRange(`sheet1!I${entry.rowIndex}`, [[tripName]]);
+    await updateRange(range, [[String(tripName ?? '')]]);
+  } catch (e) {
+    setState({ error: e.message || String(e) });
+    throw e;
   } finally {
     setState({ isSyncing: false });
   }
@@ -126,13 +156,23 @@ export const addDayToTrip = (entry, tripName) => updateTripCell(entry, tripName)
 
 export async function deleteTrip(tripName) {
   const matches = state.entries.filter(e => e.tripName === tripName);
+
   setState({
-    entries: state.entries.map(e => e.tripName === tripName ? { ...e, tripName: '' } : e),
-    isSyncing: true
+    entries: sortEntries(state.entries.map(e => e.tripName === tripName ? { ...e, tripName: '' } : e)),
+    isSyncing: true,
+    error: ''
   });
 
   try {
-    for (const e of matches) await updateRange(`sheet1!I${e.rowIndex}`, [['']]);
+    for (const e of matches) {
+      const row = assertTargetEntry(e, 'delete trip');
+      const range = tripCellRange(row);
+      logWriteAudit('deleteTrip.clearTripCell', e, { range, fields: 'I only' });
+      await updateRange(range, [['']]);
+    }
+  } catch (e) {
+    setState({ error: e.message || String(e) });
+    throw e;
   } finally {
     setState({ isSyncing: false });
   }

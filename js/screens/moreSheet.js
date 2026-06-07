@@ -9,7 +9,7 @@ import {
 } from '../services/googleAuth.js';
 import { syncAll } from '../services/syncService.js';
 
-const WEB_VERSION = 'Viaticum Web v2.1.0 — sheet parser compatibility pass';
+const WEB_VERSION = 'Viaticum Web v2.2.0 — write safety guards';
 
 function yesNo(value) {
   return value ? 'yes' : 'no';
@@ -37,6 +37,17 @@ function debugPanel() {
     el('p', { class: 'muted auth-debug-line' }, `Storage available: ${yesNo(debug.storageAvailable)}`),
     el('p', { class: 'muted auth-debug-line' }, `Token expiry: ${formatExpiry(debug.tokenExpiresAt)}`),
     debug.lastAuthError ? el('p', { class: 'error-text auth-debug-line' }, `Last auth error: ${debug.lastAuthError}`) : ''
+  );
+}
+
+function phase2DebugPanel() {
+  return el('section', { class: 'settings-section phase2-debug-section' },
+    el('h3', {}, 'Sheet write rules'),
+    el('p', { class: 'muted auth-debug-line' }, 'Save/copy: C:I'),
+    el('p', { class: 'muted auth-debug-line' }, 'Clear day: C:H only'),
+    el('p', { class: 'muted auth-debug-line' }, 'Move day: old C:I cleared, new C:I written'),
+    el('p', { class: 'muted auth-debug-line' }, 'Trip changes: I only'),
+    el('p', { class: 'muted auth-debug-line' }, 'Write audits are logged in the browser console.')
   );
 }
 
@@ -82,6 +93,7 @@ export function renderMoreSheet() {
           button(state.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode', () => setState({ isDarkMode: !state.isDarkMode }), 'btn settings-action')
         ),
         debugPanel(),
+        phase2DebugPanel(),
         el('p', { class: 'settings-version' }, WEB_VERSION)
       )
     )
