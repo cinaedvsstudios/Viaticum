@@ -1,0 +1,11 @@
+<project>
+  <component name="ExternalProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Viaticum.iml" filepath="$PROJECT_DIR$/.idea/modules/Viaticum.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Viaticum.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Viaticum.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Viaticum.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Viaticum.app.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Viaticum.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Viaticum.app.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Viaticum.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Viaticum.app.unitTest.iml" />
+    </modules>
+  </component>
+</project>
