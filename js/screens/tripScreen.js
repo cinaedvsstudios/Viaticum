@@ -24,7 +24,11 @@ export function renderTripScreen() {
   return el('main', { class: 'screen trip-screen trip-split-screen' },
     el('div', { class: 'trip-desktop-grid' },
       tripSidebar(list, selected),
-      el('section', { class: 'trip-detail-pane' }, header(selected, days), controls(selected, days), timeline(days, selected))
+      el('section', { class: 'trip-detail-pane' },
+        header(selected, days),
+        controls(selected, days),
+        timeline(days, selected)
+      )
     ),
     bottomNav(state.refData, {
       homeLabel: 'Home',
@@ -39,8 +43,13 @@ export function renderTripScreen() {
 
 function tripSidebar(list, selected) {
   return el('aside', { class: 'trip-sidebar' },
-    el('header', {}, el('h2', {}, 'Trips'), button('＋ New Trip', () => newTrip(), 'chip-btn new-trip-button')),
-    el('div', { class: 'trip-sidebar-list' }, list.length ? list.map(tripName => tripListItem(tripName, selected)) : el('p', { class: 'muted' }, 'No trips yet.'))
+    el('header', {},
+      el('h2', {}, 'Trips'),
+      button('＋ New Trip', () => newTrip(), 'chip-btn new-trip-button')
+    ),
+    el('div', { class: 'trip-sidebar-list' },
+      list.length ? list.map(tripName => tripListItem(tripName, selected)) : el('p', { class: 'muted' }, 'No trips yet.')
+    )
   );
 }
 
@@ -94,7 +103,7 @@ function timeline(days, selected) {
 function dayItem(entry, last) {
   const expanded = state.expandedDays.has(entry.date);
   const title = `${state.refData.events[entry.event] || ''} ${entry.event || entry.location}`.trim();
-  return el('article', { class: `trip-day ${expanded ? 'open' : ''}` },
+  return el('article', { class: `trip-day ${expanded ? 'open' : ''} ${last ? 'last' : ''}` },
     el('div', { class: 'trip-date' },
       el('b', {}, new Date(entry.date + 'T00:00').toLocaleDateString(undefined, { weekday: 'short' })),
       el('span', {}, entry.date.slice(8))
@@ -105,10 +114,10 @@ function dayItem(entry, last) {
         el('strong', {}, title),
         state.tripEdit ? button('❌', () => removeDayFromTrip(entry), 'mini danger') : el('span', { class: 'collapse-indicator' }, expanded ? '⌃' : '⌄')
       ),
-      expanded ? el('div', {},
-        sectionCard('SCHEDULE', scheduleTimeline(entry.schedule, state.refData), 'section-card schedule'),
-        sectionCard('DETAILS', detailsGrid(entry.details, state.refData), 'section-card details'),
-        sectionCard('DAY FILES', linksGrid(entry.links, state.refData), 'section-card files')
+      expanded ? el('div', { class: 'trip-expanded-content' },
+        entry.schedule ? sectionCard('SCHEDULE', scheduleTimeline(entry.schedule, state.refData), 'section-card schedule') : '',
+        entry.details ? sectionCard('DETAILS', detailsGrid(entry.details, state.refData), 'section-card details') : '',
+        entry.links ? sectionCard('DAY FILES', linksGrid(entry.links, state.refData), 'section-card files') : ''
       ) : ''
     )
   );

@@ -30,9 +30,20 @@ export function renderMainScreen() {
 
   const root = el('main', { class: 'screen main-screen' },
     loadingBanner(state),
-    el('div', { class: 'main-desktop-grid' },
-      el('section', { class: 'main-left-pane' }, header(), calendar(), scheduleList()),
-      el('section', { class: 'main-right-pane' }, preview(selected))
+    el('div', { class: 'main-dashboard-grid' },
+      el('section', { class: 'dashboard-card calendar-dashboard-card' },
+        header(),
+        calendar()
+      ),
+      el('section', { class: 'dashboard-card day-dashboard-card' },
+        dayPanel(selected)
+      ),
+      el('section', { class: 'dashboard-card schedule-dashboard-card' },
+        scheduleList()
+      ),
+      el('section', { class: 'dashboard-card details-dashboard-card' },
+        detailsPanel(selected)
+      )
     ),
     state.modal === 'month-picker' ? monthPickerModal() : '',
     nav()
@@ -100,11 +111,16 @@ function dayCell(day) {
     day.iso === state.selectedDate ? 'selected' : '',
     day.isToday ? 'today' : '',
     day.isPast && !day.isToday ? 'past' : '',
-    !hasData && day.inMonth ? 'empty' : ''
+    !hasData && day.inMonth ? 'empty' : '',
+    hasData ? 'has-data' : ''
   ].filter(Boolean).join(' ');
 
   return el('button', { class: classes, type: 'button', onClick: () => setState({ selectedDate: day.iso }) },
-    emojis.length ? el('span', { class: 'emoji-grid' }, emojis.map(e => el('span', {}, e))) : String(day.day)
+    emojis.length
+      ? el('span', { class: 'emoji-grid' }, emojis.map(e => el('span', {}, e)))
+      : hasData
+        ? el('span', { class: 'fallback-data-icon' }, '•')
+        : String(day.day)
   );
 }
 
@@ -123,9 +139,9 @@ function scheduleList() {
   );
 }
 
-function preview(entry) {
+function dayPanel(entry) {
   const hasContent = entry.location || entry.event || entry.status || entry.schedule || entry.details || entry.links;
-  return el('section', { class: 'preview-panel' },
+  return el('section', { class: 'preview-panel main-day-card' },
     el('header', { class: 'preview-click-header', onClick: () => pushRoute('day') },
       el('div', {},
         el('h2', {}, formatLong(entry.date)),
@@ -147,11 +163,19 @@ function preview(entry) {
         iconButton(state.refData, 'Icon_ExpandAll', 'Open', () => pushRoute('day'))
       )
     ),
+    entry.schedule
+      ? el('div', { class: 'day-card-schedule-preview' }, sectionCard('SCHEDULE', scheduleTimeline(entry.schedule, state.refData), 'section-card schedule'))
+      : el('p', { class: 'muted no-details' }, 'No schedule for selected day.')
+  );
+}
+
+function detailsPanel(entry) {
+  return el('section', { class: 'preview-panel details-panel' },
+    el('h2', { class: 'dashboard-card-title' }, 'Details'),
     el('div', { class: 'preview-scroll' },
-      entry.schedule ? sectionCard('SCHEDULE', scheduleTimeline(entry.schedule, state.refData), 'section-card schedule') : '',
       entry.details ? sectionCard('DETAILS', detailsGrid(entry.details, state.refData), 'section-card details') : '',
       entry.links ? sectionCard('DAY FILES', linksGrid(entry.links, state.refData), 'section-card files') : '',
-      !entry.schedule && !entry.details && !entry.links ? el('p', { class: 'muted no-details' }, 'No details for selected day.') : ''
+      !entry.details && !entry.links ? el('p', { class: 'muted no-details' }, 'No details or files for selected day.') : ''
     )
   );
 }
