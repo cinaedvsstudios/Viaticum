@@ -1,86 +1,166 @@
 import { config } from '../config.js';
 import { setState, state } from '../state.js';
 
-const AUTH_WANTED_KEY = 'viaticum.googleAuthWanted';
+const CONNECTED_KEY = 'viaticum.googleConnected';
 const TOKEN_KEY = 'viaticum.googleAccessToken';
 const TOKEN_EXPIRY_KEY = 'viaticum.googleAccessTokenExpiresAt';
+const LAST_AUTH_ERROR_KEY = 'viaticum.googleLastAuthError';
 
 const missing = () => !config.googleClientId || config.googleClientId.includes('PASTE_GOOGLE_OAUTH_CLIENT_ID_HERE');
 
-let tokenClient;
-let silentRestoreInProgress = false;
+let tokenClient = null;
+let restoreAttemptInProgress = false;
+let interactiveSignInInProgress = false;
 
 export function hasClientId() {
   return !missing();
 }
 
-export function accessToken() {
-  return state.accessToken || cachedToken();
+export function storageAvailable() {
+  try {
+    const key = 'viaticum.storageTest';
+    localStorage.setItem(key, '1');
+    localStorage.removeItem(key);
+    sessionStorage.setItem(key, '1');
+    sessionStorage.removeItem(key);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function readStorage(key) {
+  try {
+    return localStorage.getItem(key) || sessionStorage.getItem(key) || '';
+  } catch (_) {
+    return '';
+  }
+}
+
+function writeStorage(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (_) {}
+
+  try {
+    sessionStorage.setItem(key, value);
+  } catch (_) {}
+}
+
+function removeStorage(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch (_) {}
+
+  try {
+    sessionStorage.removeItem(key);
+  } catch (_) {}
 }
 
 function nowMs() {
   return Date.now();
 }
 
+function tokenExpiryMs() {
+  const raw = readStorage(TOKEN_EXPIRY_KEY);
+  const value = Number(raw || 0);
+  return Number.isFinite(value) ? value : 0;
+}
+
 function cachedToken() {
-  try {
-    const token = sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || '';
-    const expiresAt = Number(sessionStorage.getItem(TOKEN_EXPIRY_KEY) || localStorage.getItem(TOKEN_EXPIRY_KEY) || 0);
+  const token = readStorage(TOKEN_KEY);
+  const expiresAt = tokenExpiryMs();
 
-    // Give ourselves a 2-minute safety buffer so we do not reuse a token that is about to expire.
-    if (token && expiresAt && expiresAt > nowMs() + 120000) {
-      return token;
-    }
-
-    clearCachedTokenOnly();
-    return '';
-  } catch (_) {
-    return '';
+  if (token && expiresAt && expiresAt > nowMs() + 120000) {
+    return token;
   }
+
+  clearCachedTokenOnly();
+  return '';
 }
 
 function cacheToken(token, expiresInSeconds) {
   const safeExpiresIn = Number(expiresInSeconds || 3600);
   const expiresAt = nowMs() + Math.max(60, safeExpiresIn - 60) * 1000;
 
-  try {
-    // sessionStorage keeps refreshes in the same browser tab working.
-    sessionStorage.setItem(TOKEN_KEY, token);
-    sessionStorage.setItem(TOKEN_EXPIRY_KEY, String(expiresAt));
-
-    // localStorage keeps refreshes/new tabs working for this personal app.
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(TOKEN_EXPIRY_KEY, String(expiresAt));
-  } catch (_) {}
+  writeStorage(TOKEN_KEY, token);
+  writeStorage(TOKEN_EXPIRY_KEY, String(expiresAt));
 }
 
 function clearCachedTokenOnly() {
-  try {
-    sessionStorage.removeItem(TOKEN_KEY);
-    sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(TOKEN_EXPIRY_KEY);
-  } catch (_) {}
+  removeStorage(TOKEN_KEY);
+  removeStorage(TOKEN_EXPIRY_KEY);
 }
 
-function rememberGoogleSignIn() {
-  try {
-    localStorage.setItem(AUTH_WANTED_KEY, 'true');
-  } catch (_) {}
+function setConnected(value) {
+  if (value) {
+    writeStorage(CONNECTED_KEY, 'true');
+  } else {
+    removeStorage(CONNECTED_KEY);
+  }
 }
 
-function forgetGoogleSignIn() {
-  try {
-    localStorage.removeItem(AUTH_WANTED_KEY);
-  } catch (_) {}
+export function isGoogleConnected() {
+  return readStorage(CONNECTED_KEY) === 'true';
 }
 
-function shouldRestoreGoogleSignIn() {
-  try {
-    return localStorage.getItem(AUTH_WANTED_KEY) === 'true';
-  } catch (_) {
+export function lastAuthError() {
+  return readStorage(LAST_AUTH_ERROR_KEY);
+}
+
+function setLastAuthError(value) {
+  if (value) writeStorage(LAST_AUTH_ERROR_KEY, value);
+  else removeStorage(LAST_AUTH_ERROR_KEY);
+}
+
+export function accessToken() {
+  return state.accessToken || cachedToken();
+}
+
+export function accessTokenActive() {
+  return Boolean(accessToken());
+}
+
+export function authDebugInfo() {
+  return {
+    hasClientId: hasClientId(),
+    googleConnected: isGoogleConnected(),
+    accessTokenActive: accessTokenActive(),
+    storageAvailable: storageAvailable(),
+    tokenExpiresAt: tokenExpiryMs(),
+    lastAuthError: lastAuthError()
+  };
+}
+
+async function waitForGoogleIdentity() {
+  await new Promise(resolve => {
+    const wait = () => window.google?.accounts?.oauth2 ? resolve() : setTimeout(wait, 50);
+    wait();
+  });
+}
+
+async function ensureTokenClient() {
+  if (tokenClient) return true;
+
+  if (missing()) {
+    setState({
+      authReady: false,
+      demoMode: true,
+      error: 'Google OAuth client ID is missing. Add it in js/config.js to sync.'
+    });
     return false;
   }
+
+  await waitForGoogleIdentity();
+
+  tokenClient = window.google.accounts.oauth2.initTokenClient({
+    client_id: config.googleClientId,
+    scope: config.scopes,
+    callback: handleTokenResponse
+  });
+
+  setState({ authReady: true });
+  return true;
 }
 
 export async function initAuth() {
@@ -94,6 +174,7 @@ export async function initAuth() {
   }
 
   const token = cachedToken();
+
   if (token) {
     setState({
       accessToken: token,
@@ -102,46 +183,62 @@ export async function initAuth() {
       error: ''
     });
 
-    // Let sync run after the app has mounted.
     setTimeout(() => window.dispatchEvent(new CustomEvent('viaticum:auth')), 50);
   }
 
-  await new Promise(resolve => {
-    const wait = () => window.google?.accounts?.oauth2 ? resolve() : setTimeout(wait, 50);
-    wait();
-  });
+  const ok = await ensureTokenClient();
+  if (!ok) return false;
 
-  tokenClient = window.google.accounts.oauth2.initTokenClient({
-    client_id: config.googleClientId,
-    scope: config.scopes,
-    callback: handleTokenResponse
-  });
-
-  setState({ authReady: true });
-
-  if (!token && shouldRestoreGoogleSignIn()) {
-    silentRestoreInProgress = true;
-    setState({ error: 'Restoring Google sign-in…' });
-
-    setTimeout(() => {
-      try {
-        tokenClient.requestAccessToken({ prompt: '' });
-      } catch (_) {
-        silentRestoreInProgress = false;
-        setState({ error: 'Sign in with Google from Settings to sync Sheets data.' });
-      }
-    }, 150);
-  } else if (!token) {
-    setState({ error: 'Sign in with Google from Settings to sync Sheets data.' });
+  if (token) {
+    return true;
   }
+
+  if (isGoogleConnected()) {
+    restoreAttemptInProgress = true;
+    setState({
+      authReady: true,
+      demoMode: true,
+      error: 'Restoring Google connection…'
+    });
+
+    setTimeout(() => requestSilentToken(), 100);
+    return true;
+  }
+
+  setState({
+    authReady: true,
+    demoMode: true,
+    error: 'Sign in with Google from Settings to sync Sheets data.'
+  });
 
   return true;
 }
 
+function requestSilentToken() {
+  if (!tokenClient) return;
+
+  try {
+    tokenClient.requestAccessToken({ prompt: '' });
+  } catch (error) {
+    restoreAttemptInProgress = false;
+    const message = error?.message || 'Silent Google reconnect failed.';
+    setLastAuthError(message);
+    clearCachedTokenOnly();
+    setState({
+      accessToken: '',
+      demoMode: true,
+      error: 'Reconnect Google from Settings to sync Sheets data.'
+    });
+  }
+}
+
 function handleTokenResponse(res) {
   if (res?.access_token) {
-    silentRestoreInProgress = false;
-    rememberGoogleSignIn();
+    restoreAttemptInProgress = false;
+    interactiveSignInInProgress = false;
+
+    setConnected(true);
+    setLastAuthError('');
     cacheToken(res.access_token, res.expires_in);
 
     setState({
@@ -155,40 +252,85 @@ function handleTokenResponse(res) {
     return;
   }
 
-  const wasSilent = silentRestoreInProgress;
-  silentRestoreInProgress = false;
+  const message = res?.error_description || res?.error || 'Google sign-in did not return an access token.';
+  setLastAuthError(message);
+  clearCachedTokenOnly();
 
-  if (wasSilent) {
-    clearCachedTokenOnly();
-    setState({ error: 'Google session could not be restored silently. Sign in from Settings to sync Sheets data.' });
+  if (restoreAttemptInProgress) {
+    restoreAttemptInProgress = false;
+
+    setState({
+      accessToken: '',
+      authReady: true,
+      demoMode: true,
+      error: 'Reconnect Google from Settings to sync Sheets data.'
+    });
+
     return;
   }
 
-  clearCachedTokenOnly();
-  setState({ error: res?.error || 'Google sign-in failed' });
-}
-
-export async function signIn() {
-  if (!tokenClient) {
-    const ok = await initAuth();
-    if (!ok) return;
-  }
-
-  tokenClient.requestAccessToken({ prompt: state.accessToken || cachedToken() ? '' : 'consent' });
-}
-
-export function signOut() {
-  forgetGoogleSignIn();
-
-  const token = state.accessToken || cachedToken();
-  if (token && window.google?.accounts?.oauth2) {
-    window.google.accounts.oauth2.revoke(token);
-  }
-
-  clearCachedTokenOnly();
+  interactiveSignInInProgress = false;
 
   setState({
     accessToken: '',
+    authReady: true,
+    demoMode: true,
+    error: message
+  });
+}
+
+export async function signIn() {
+  const ok = await ensureTokenClient();
+  if (!ok) return;
+
+  interactiveSignInInProgress = true;
+  restoreAttemptInProgress = false;
+
+  try {
+    tokenClient.requestAccessToken({ prompt: 'consent' });
+  } catch (error) {
+    interactiveSignInInProgress = false;
+    const message = error?.message || 'Google sign-in failed.';
+    setLastAuthError(message);
+
+    setState({
+      accessToken: '',
+      demoMode: true,
+      error: message
+    });
+  }
+}
+
+export async function reconnectGoogle() {
+  const ok = await ensureTokenClient();
+  if (!ok) return;
+
+  restoreAttemptInProgress = true;
+
+  try {
+    tokenClient.requestAccessToken({ prompt: '' });
+  } catch (_) {
+    restoreAttemptInProgress = false;
+    signIn();
+  }
+}
+
+export function signOut() {
+  const token = state.accessToken || cachedToken();
+
+  if (token && window.google?.accounts?.oauth2) {
+    try {
+      window.google.accounts.oauth2.revoke(token);
+    } catch (_) {}
+  }
+
+  setConnected(false);
+  clearCachedTokenOnly();
+  setLastAuthError('');
+
+  setState({
+    accessToken: '',
+    authReady: true,
     demoMode: true,
     error: 'Signed out of Google.'
   });

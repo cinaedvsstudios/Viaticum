@@ -1,11 +1,49 @@
 import { state, setState } from '../state.js';
 import { el, button } from '../utils/dom.js';
-import { signIn, signOut, hasClientId } from '../services/googleAuth.js';
+import {
+  signIn,
+  signOut,
+  reconnectGoogle,
+  hasClientId,
+  authDebugInfo
+} from '../services/googleAuth.js';
 import { syncAll } from '../services/syncService.js';
 
-const WEB_VERSION = 'Viaticum Web v1.7.0 — scroll + image flicker fix';
+const WEB_VERSION = 'Viaticum Web v1.8.0 — persistent Google connection fix';
+
+function yesNo(value) {
+  return value ? 'yes' : 'no';
+}
+
+function formatExpiry(value) {
+  if (!value) return 'none';
+
+  try {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'invalid';
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch (_) {
+    return 'invalid';
+  }
+}
+
+function debugPanel() {
+  const debug = authDebugInfo();
+
+  return el('section', { class: 'settings-section auth-debug-section' },
+    el('h3', {}, 'Connection debug'),
+    el('p', { class: 'muted auth-debug-line' }, `Google connected: ${yesNo(debug.googleConnected)}`),
+    el('p', { class: 'muted auth-debug-line' }, `Access token active: ${yesNo(debug.accessTokenActive)}`),
+    el('p', { class: 'muted auth-debug-line' }, `Storage available: ${yesNo(debug.storageAvailable)}`),
+    el('p', { class: 'muted auth-debug-line' }, `Token expiry: ${formatExpiry(debug.tokenExpiresAt)}`),
+    debug.lastAuthError ? el('p', { class: 'error-text auth-debug-line' }, `Last auth error: ${debug.lastAuthError}`) : ''
+  );
+}
 
 export function renderMoreSheet() {
+  const debug = authDebugInfo();
+  const connectedButInactive = debug.googleConnected && !debug.accessTokenActive;
+
   return el('div', {
       class: 'modal-backdrop settings-backdrop',
       onClick: e => {
@@ -25,8 +63,14 @@ export function renderMoreSheet() {
         !hasClientId() ? el('p', { class: 'muted settings-message' }, 'Add a browser OAuth client ID in js/config.js to enable Google Sheets sync.') : '',
         el('section', { class: 'settings-section' },
           el('h3', {}, 'Account'),
-          el('p', { class: state.accessToken ? 'settings-status signed-in' : 'settings-status' }, state.accessToken ? 'Signed in to Google' : 'Not signed in to Google'),
-          button(state.accessToken ? 'Sign out of Google' : 'Sign in with Google', state.accessToken ? signOut : signIn, 'btn primary settings-action')
+          el('p', {
+            class: debug.accessTokenActive ? 'settings-status signed-in' : 'settings-status'
+          }, debug.accessTokenActive ? 'Signed in to Google' : connectedButInactive ? 'Google connected, reconnect needed' : 'Not signed in to Google'),
+          debug.accessTokenActive
+            ? button('Sign out of Google', signOut, 'btn primary settings-action')
+            : connectedButInactive
+              ? button('Reconnect Google', reconnectGoogle, 'btn primary settings-action')
+              : button('Sign in with Google', signIn, 'btn primary settings-action')
         ),
         el('section', { class: 'settings-section' },
           el('h3', {}, 'Sync'),
@@ -37,6 +81,7 @@ export function renderMoreSheet() {
           el('h3', {}, 'Appearance'),
           button(state.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode', () => setState({ isDarkMode: !state.isDarkMode }), 'btn settings-action')
         ),
+        debugPanel(),
         el('p', { class: 'settings-version' }, WEB_VERSION)
       )
     )
