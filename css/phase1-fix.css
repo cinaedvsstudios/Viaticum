@@ -1,5 +1,8 @@
-/* Viaticum Phase 1.9.1 — hard fix for Booked/status pill placement in the main Day card. */
+/* Viaticum Phase 1.9.2 — toolbar restore fix.
+   This keeps the Booked pill inline while forcing all toolbar icons back into one horizontal row.
+*/
 
+/* Main selected-day header: Location | Booked/status | Event */
 .main-day-event-status-line {
   display: inline-flex !important;
   flex-direction: row !important;
@@ -22,6 +25,10 @@
   line-height: 1.15 !important;
 }
 
+.main-day-location-text {
+  order: 1 !important;
+}
+
 .main-day-event-status-line .status-chips,
 .main-day-event-status-line .status-chip,
 .main-day-event-status-line [class*="status"] {
@@ -30,10 +37,6 @@
   align-items: center !important;
   order: 2 !important;
   margin: 0 !important;
-}
-
-.main-day-location-text {
-  order: 1 !important;
 }
 
 .main-day-event-text {
@@ -46,7 +49,84 @@
   display: none !important;
 }
 
-/* Existing Phase 1.9 layout rules kept. */
+/* CRITICAL: toolbar must be horizontal, never left/right vertical columns. */
+.preview-toolbar,
+.toolbar.preview-toolbar,
+.day-dashboard-card .preview-toolbar,
+.day-dashboard-card .toolbar,
+.day-toolbar,
+.day-screen .toolbar {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 10px 0 !important;
+  border-bottom: 2px solid #1e9af0 !important;
+}
+
+.preview-toolbar .toolbar-left,
+.preview-toolbar .toolbar-right,
+.day-toolbar .toolbar-left,
+.day-toolbar .toolbar-right,
+.toolbar-left,
+.toolbar-right {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-width: 0 !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+.preview-toolbar .toolbar-left,
+.day-toolbar .toolbar-left,
+.toolbar-left {
+  justify-content: flex-start !important;
+}
+
+.preview-toolbar .toolbar-right,
+.day-toolbar .toolbar-right,
+.toolbar-right {
+  justify-content: flex-end !important;
+  margin-left: auto !important;
+}
+
+.preview-toolbar button,
+.preview-toolbar .icon-button,
+.preview-toolbar [role="button"],
+.day-toolbar button,
+.day-toolbar .icon-button,
+.day-toolbar [role="button"],
+.toolbar-left button,
+.toolbar-right button {
+  flex: 0 0 auto !important;
+  display: inline-flex !important;
+  width: auto !important;
+  min-width: 28px !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 28px !important;
+  padding: 2px !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.preview-toolbar img,
+.preview-toolbar svg,
+.preview-toolbar span,
+.day-toolbar img,
+.day-toolbar svg,
+.day-toolbar span {
+  display: inline-flex !important;
+}
+
+/* Main desktop layout: calendar | slightly larger middle | slightly smaller schedule */
 .main-screen .main-dashboard-grid,
 .main-dashboard-grid,
 .main-dashboard-grid.main-dashboard-grid-three {
@@ -56,6 +136,15 @@
   align-items: stretch !important;
 }
 
+.main-middle-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+
+/* Month selector: no grey native button background. */
 .month-header .month-picker-button,
 .compact-month-header .month-picker-button,
 button.month-picker-button,
@@ -84,14 +173,6 @@ button.month-picker-button,
 .month-picker-button::before,
 .month-picker-button::after {
   display: none !important;
-}
-
-.main-middle-stack {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 16px !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
 }
 
 @media (min-width: 701px) {
@@ -199,5 +280,5 @@ button.month-picker-button,
 }
 
 .settings-version::after {
-  content: " · booked pill hard fix" !important;
+  content: " · toolbar restore" !important;
 }
