@@ -1,6 +1,52 @@
-/* Viaticum Phase 1.9 */
+/* Viaticum Phase 1.9.1 — hard fix for Booked/status pill placement in the main Day card. */
 
-/* Main desktop: middle column +5%, schedule column -5%. */
+.main-day-event-status-line {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  flex-wrap: wrap !important;
+  width: 100% !important;
+  margin-top: 4px !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+
+.main-day-location-text,
+.main-day-event-text {
+  display: inline-flex !important;
+  align-items: center !important;
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  line-height: 1.15 !important;
+}
+
+.main-day-event-status-line .status-chips,
+.main-day-event-status-line .status-chip,
+.main-day-event-status-line [class*="status"] {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  order: 2 !important;
+  margin: 0 !important;
+}
+
+.main-day-location-text {
+  order: 1 !important;
+}
+
+.main-day-event-text {
+  order: 3 !important;
+}
+
+.preview-click-header > .status-chips,
+.preview-click-header > .status-chip,
+.preview-click-header > [class*="status"] {
+  display: none !important;
+}
+
+/* Existing Phase 1.9 layout rules kept. */
 .main-screen .main-dashboard-grid,
 .main-dashboard-grid,
 .main-dashboard-grid.main-dashboard-grid-three {
@@ -10,7 +56,6 @@
   align-items: stretch !important;
 }
 
-/* Month selector: kill the grey native button background. */
 .month-header .month-picker-button,
 .compact-month-header .month-picker-button,
 button.month-picker-button,
@@ -49,7 +94,6 @@ button.month-picker-button,
   min-height: 0 !important;
 }
 
-/* Desktop main: freeze page, scroll individual boxes. */
 @media (min-width: 701px) {
   html,
   body {
@@ -99,7 +143,6 @@ button.month-picker-button,
     overflow: hidden !important;
   }
 
-  /* Main middle column should be 50:50 vertical split. */
   .day-dashboard-card,
   .details-under-day,
   .details-dashboard-card {
@@ -155,237 +198,6 @@ button.month-picker-button,
   }
 }
 
-/* Details content should actually scroll inside its card. */
-.details-under-day .preview-panel,
-.details-dashboard-card .preview-panel,
-.details-panel {
-  height: 100% !important;
-  min-height: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-}
-
-.details-under-day .dashboard-card-title {
-  flex: 0 0 auto !important;
-}
-
-.details-under-day .preview-scroll,
-.details-under-day-scroll {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-}
-
-/* Desktop Day screen 2-column layout, forced 50:50. */
-@media (min-width: 900px) {
-  .day-screen {
-    max-width: 1180px !important;
-    height: 100dvh !important;
-    overflow: hidden !important;
-    margin: 0 auto !important;
-    padding: 16px 18px calc(var(--nav-height, 72px) + 14px) !important;
-    box-sizing: border-box !important;
-  }
-
-  .day-shell {
-    height: 100% !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
-
-  .day-content-two-col {
-    flex: 1 1 auto !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) !important;
-    gap: 14px !important;
-    align-items: stretch !important;
-  }
-
-  .day-content-two-col .section-card {
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    margin: 0 !important;
-    scrollbar-gutter: stable !important;
-  }
-
-  .day-content-two-col .section-card.schedule {
-    grid-column: 1 / 2 !important;
-    grid-row: 1 / 3 !important;
-  }
-
-  .day-content-two-col .section-card.details {
-    grid-column: 2 / 3 !important;
-    grid-row: 1 / 2 !important;
-  }
-
-  .day-content-two-col .section-card.files {
-    grid-column: 2 / 3 !important;
-    grid-row: 2 / 3 !important;
-  }
-}
-
-@media (max-width: 899px) {
-  .day-screen {
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  .day-content-two-col {
-    display: block !important;
-  }
-}
-
-/* Status/booked pill before event name. */
-.day-event-status-line {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  flex-wrap: wrap !important;
-  margin-top: 4px !important;
-}
-
-.day-event-status-line .status-chips,
-.day-event-status-line .status-chip {
-  order: 1 !important;
-}
-
-.day-event-line {
-  order: 2 !important;
-  color: #ffffff !important;
-  font-weight: 900 !important;
-  line-height: 1.1 !important;
-}
-
-.preview-click-header .status-chips,
-.preview-click-header .status-chip {
-  margin-right: 6px !important;
-}
-
-/* Visible date with hidden native date input. */
-.day-date-control {
-  position: relative !important;
-  display: inline-block !important;
-  cursor: pointer !important;
-}
-
-.day-date-display {
-  display: inline-block !important;
-  font-size: 22px !important;
-  font-weight: 900 !important;
-  color: #ffffff !important;
-  line-height: 1.15 !important;
-}
-
-.day-date-display::after {
-  content: " ▾";
-  font-size: .72em;
-  opacity: .85;
-}
-
-.day-date-native {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  opacity: 0 !important;
-  cursor: pointer !important;
-  z-index: 2 !important;
-}
-
-/* Toolbar stays horizontal. */
-.preview-toolbar,
-.day-toolbar,
-.toolbar.preview-toolbar,
-.day-dashboard-card .toolbar,
-.day-screen .toolbar {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 10px !important;
-  width: 100% !important;
-  padding: 10px 0 !important;
-  border-bottom: 2px solid #1e9af0 !important;
-}
-
-.toolbar-left,
-.toolbar-right {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  align-items: center !important;
-  gap: 12px !important;
-  min-width: 0 !important;
-}
-
-.toolbar-right {
-  margin-left: auto !important;
-}
-
-/* Day files horizontal when they fit. */
-.links-grid,
-.file-grid,
-.section-card.files .links-grid,
-.section-card.files .file-grid,
-.section-card.files > div:not(.section-header) {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: wrap !important;
-  align-items: stretch !important;
-  justify-content: flex-start !important;
-  gap: 8px !important;
-}
-
-.links-grid > *,
-.file-grid > *,
-.section-card.files .file-card,
-.section-card.files .link-card,
-.section-card.files a,
-.section-card.files button {
-  flex: 0 1 130px !important;
-  width: auto !important;
-  min-width: 96px !important;
-  max-width: 160px !important;
-}
-
-/* Trip collapsed days gold until expanded. */
-.trip-day:not(.open) .trip-card {
-  background: #fff8cf !important;
-  border-color: #ffb300 !important;
-}
-
-.trip-day:not(.open) .trip-card header {
-  background: transparent !important;
-}
-
-.trip-day.open .trip-card {
-  background: #e3f2fd !important;
-  border-color: #2196f3 !important;
-}
-
-.trip-day:not(.open) .collapse-indicator {
-  color: #9a6a00 !important;
-}
-
-.trip-day.open .collapse-indicator {
-  color: #0d47a1 !important;
-}
-
-.trip-header .image-box.placeholder {
-  background: rgba(255,255,255,.18) !important;
-  border: 2px solid rgba(255,255,255,.35) !important;
-}
-
 .settings-version::after {
-  content: " · split/status/image fix" !important;
+  content: " · booked pill hard fix" !important;
 }

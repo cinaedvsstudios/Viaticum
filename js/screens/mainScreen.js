@@ -141,15 +141,25 @@ function scheduleList() {
   );
 }
 
+function selectedDaySubline(entry) {
+  const locationText = entry.location ? `${state.refData.locations[entry.location] || ''} ${entry.location}`.trim() : '';
+  const eventText = entry.event || '';
+
+  return el('div', { class: 'main-day-event-status-line' },
+    locationText ? el('span', { class: 'main-day-location-text' }, locationText) : '',
+    statusChips(entry.status, state.refData),
+    eventText ? el('span', { class: 'main-day-event-text' }, eventText) : ''
+  );
+}
+
 function dayPanel(entry) {
   const hasContent = entry.location || entry.event || entry.status || entry.schedule || entry.details || entry.links;
   return el('section', { class: 'preview-panel main-day-card' },
     el('header', { class: 'preview-click-header', onClick: () => pushRoute('day') },
-      el('div', {},
+      el('div', { class: 'main-day-header-copy' },
         el('h2', {}, formatLong(entry.date)),
-        entry.location || entry.event ? el('p', {}, `${entry.location}${entry.location && entry.event ? ' • ' : ''}${entry.event}`.trim()) : el('p', {}, 'Select a day')
-      ),
-      statusChips(entry.status, state.refData)
+        entry.location || entry.event || entry.status ? selectedDaySubline(entry) : el('p', {}, 'Select a day')
+      )
     ),
     el('div', { class: 'toolbar preview-toolbar' },
       el('div', { class: 'toolbar-left' },

@@ -9,7 +9,7 @@ import {
 } from '../services/googleAuth.js';
 import { syncAll } from '../services/syncService.js';
 
-const WEB_VERSION = 'Viaticum Web v1.9.0 — split/status/image fix';
+const WEB_VERSION = 'Viaticum Web v1.9.1 — booked pill hard fix';
 
 function yesNo(value) {
   return value ? 'yes' : 'no';
