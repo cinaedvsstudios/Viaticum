@@ -1,0 +1,285 @@
+/* Phase 1.2: desktop section scrolling + readable month button.
+   Load this after responsive.css. This file also keeps the Phase 1.1 3-column layout.
+*/
+
+.main-dashboard-grid.main-dashboard-grid-three {
+  grid-template-columns:
+    minmax(280px, 1fr)
+    minmax(320px, 1.05fr)
+    minmax(280px, 1fr) !important;
+  gap: 16px !important;
+  align-items: stretch !important;
+}
+
+.main-middle-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.details-under-day {
+  min-height: 0;
+}
+
+.details-under-day .dashboard-card-title {
+  margin-bottom: 12px;
+}
+
+.details-under-day-scroll {
+  max-height: none !important;
+  overflow: visible !important;
+  padding-right: 0 !important;
+}
+
+.details-under-day .details-grid,
+.details-under-day .links-grid,
+.details-under-day .file-grid,
+.details-under-day .map-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.details-under-day .section-card {
+  margin-top: 12px !important;
+}
+
+.schedule-dashboard-card {
+  min-height: 0 !important;
+}
+
+.calendar-dashboard-card,
+.day-dashboard-card,
+.details-dashboard-card,
+.schedule-dashboard-card {
+  align-self: stretch;
+}
+
+/* Month selector fix: the text was becoming white-on-grey / low contrast. */
+.month-picker-button {
+  background: transparent !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,.22);
+}
+
+.month-picker-button:hover,
+.month-picker-button:focus {
+  background: rgba(255,255,255,.16) !important;
+  outline: 2px solid rgba(255,255,255,.35);
+  outline-offset: 2px;
+}
+
+.month-picker-caret {
+  color: #ffffff !important;
+}
+
+/* Desktop/web app mode:
+   the page itself should stay fixed; each panel/card scrolls internally.
+*/
+@media (min-width: 701px) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden !important;
+  }
+
+  body {
+    overscroll-behavior: none;
+  }
+
+  #app.app-shell,
+  #app,
+  .app-shell {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
+  .screen.main-screen,
+  .main-screen {
+    height: 100dvh !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    box-sizing: border-box;
+    display: flex !important;
+    flex-direction: column !important;
+    padding-bottom: calc(var(--nav-height) + 18px) !important;
+  }
+
+  .main-screen > .banner,
+  .main-screen > .loading-banner,
+  .main-screen > [class*="banner"] {
+    flex: 0 0 auto;
+  }
+
+  .main-dashboard-grid.main-dashboard-grid-three {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto !important;
+    overflow: hidden !important;
+  }
+
+  .dashboard-card,
+  .calendar-dashboard-card,
+  .day-dashboard-card,
+  .details-dashboard-card,
+  .schedule-dashboard-card {
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .calendar-dashboard-card .month-header {
+    flex: 0 0 auto;
+  }
+
+  .calendar-dashboard-card .calendar-card {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto !important;
+    scrollbar-gutter: stable;
+  }
+
+  .main-middle-stack {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .day-dashboard-card {
+    flex: 0 1 auto;
+    max-height: 56%;
+  }
+
+  .details-dashboard-card {
+    flex: 1 1 auto;
+    min-height: 180px !important;
+  }
+
+  .day-dashboard-card .preview-panel,
+  .details-dashboard-card .preview-panel,
+  .schedule-dashboard-card .schedule-list {
+    min-height: 0;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  .day-dashboard-card .preview-click-header,
+  .day-dashboard-card .preview-toolbar,
+  .schedule-dashboard-card .schedule-list > h2,
+  .schedule-dashboard-card .schedule-head,
+  .details-dashboard-card .dashboard-card-title {
+    flex: 0 0 auto;
+  }
+
+  .day-dashboard-card .day-card-schedule-preview {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto !important;
+    padding-right: 4px;
+    scrollbar-gutter: stable;
+  }
+
+  .details-under-day-scroll,
+  .details-dashboard-card .preview-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto !important;
+    padding-right: 6px !important;
+    scrollbar-gutter: stable;
+  }
+
+  .schedule-dashboard-card .schedule-table {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto !important;
+    padding-right: 6px;
+    scrollbar-gutter: stable;
+  }
+
+  .schedule-dashboard-card .schedule-list {
+    height: 100%;
+  }
+
+  .bottom-nav,
+  nav.bottom-nav {
+    position: fixed !important;
+  }
+}
+
+/* Wider desktop: allow the 3 cards to breathe without stretching to absurd full browser width. */
+@media (min-width: 1100px) {
+  #app.app-shell,
+  #app,
+  .app-shell,
+  .screen {
+    max-width: 1480px !important;
+  }
+
+  .main-screen {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+}
+
+/* Tablet: two columns, schedule full width underneath, still internal scrolling. */
+@media (max-width: 1099px) and (min-width: 701px) {
+  .main-dashboard-grid.main-dashboard-grid-three {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  }
+
+  .schedule-dashboard-card {
+    grid-column: 1 / -1;
+    max-height: 34dvh;
+  }
+
+  .day-dashboard-card {
+    max-height: none;
+  }
+}
+
+/* Mobile:
+   keep normal vertical phone behaviour. Whole-page scrolling is OK on phone.
+   Order remains Calendar -> Day/Details -> Schedule.
+*/
+@media (max-width: 700px) {
+  html,
+  body,
+  #app.app-shell,
+  #app,
+  .app-shell,
+  .screen.main-screen,
+  .main-screen {
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow: visible !important;
+  }
+
+  .main-dashboard-grid.main-dashboard-grid-three {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+
+  .calendar-dashboard-card {
+    order: 1;
+  }
+
+  .main-middle-stack {
+    order: 2;
+  }
+
+  .schedule-dashboard-card {
+    order: 3;
+  }
+
+  .details-under-day .details-grid,
+  .details-under-day .links-grid,
+  .details-under-day .file-grid,
+  .details-under-day .map-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
