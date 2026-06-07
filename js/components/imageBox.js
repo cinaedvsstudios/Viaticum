@@ -4,52 +4,56 @@ import { el } from '../utils/dom.js';
 
 function rawImageUrl(value) {
   if (!value) return '';
-  return value.startsWith('http') ? value : `${config.rawImageBaseUrl}${value.replace(/^\/+/, '')}`;
+  return value.startsWith('http') ? value : `${config.rawImageBaseUrl}${value.replace(/^\\/+/, '')}`;
 }
 
 function firstEventName(value = '') {
   return String(value).split(',').map(part => part.trim()).filter(Boolean)[0] || '';
 }
 
+const dedupe = values => [...new Set(values.filter(Boolean))];
+
+function compactOriginal(value) {
+  return String(value || '').trim().replace(/[\s_-]+/g, '');
+}
+
+function titleCaseNoSpaces(value) {
+  return String(value || '').trim().split(/[\s_-]+/).filter(Boolean).map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join('');
+}
+
+function nameKeys(name) {
+  const original = String(name || '').trim();
+  const compact = compactOriginal(original);
+  const normal = normalizeStr(original);
+  return dedupe([original, compact, compact.toLowerCase(), titleCaseNoSpaces(original), normal, normal.replace(/oe/g, 'o'), normal.replace(/ae/g, 'a'), normal.replace(/ue/g, 'u')]);
+}
+
 function localCandidates(name) {
-  const key = normalizeStr(name);
-  if (!key) return [];
-  return [
-    `images/${key}.jpg`,
-    `images/${key}.jpeg`,
-    `images/${key}.png`,
-    `images/${key}.webp`,
-    `img/${key}.jpg`,
-    `img/${key}.jpeg`,
-    `img/${key}.png`,
-    `img/${key}.webp`,
-    `assets/${key}.jpg`,
-    `assets/${key}.jpeg`,
-    `assets/${key}.png`,
-    `assets/${key}.webp`,
-    `assets/images/${key}.jpg`,
-    `assets/images/${key}.jpeg`,
-    `assets/images/${key}.png`,
-    `assets/images/${key}.webp`
-  ];
+  const keys = nameKeys(name);
+  const folders = ['images', 'Images', 'img', 'assets', 'assets/images', 'assets/Images'];
+  const exts = ['jpg', 'jpeg', 'png', 'webp', 'JPG', 'JPEG', 'PNG', 'WEBP'];
+  const out = [];
+  folders.forEach(folder => keys.forEach(key => exts.forEach(ext => out.push(`${folder}/${key}.${ext}`))));
+  return dedupe(out);
 }
 
 function imageCandidates(name, refValue) {
   const candidates = [...localCandidates(name)];
   const refUrl = rawImageUrl(refValue);
   if (refUrl) candidates.push(refUrl);
-  return [...new Set(candidates.filter(Boolean))];
+  return dedupe(candidates);
 }
 
 export function findEventImage(entry, refData) {
   const primaryEvent = firstEventName(entry.event);
-  const direct = refData.eventImages?.[normalizeStr(primaryEvent)] || refData.eventImages?.[normalizeStr(entry.event)];
+  const direct = refData.eventImages?.[normalizeStr(primaryEvent)] || refData.eventImages?.[normalizeStr(entry.event)] || refData.locationImages?.[normalizeStr(primaryEvent)];
   return imageCandidates(primaryEvent, direct);
 }
 
 export function findLocationImage(entry, refData) {
-  const direct = refData.locationImages?.[normalizeStr(entry.location)];
-  return imageCandidates(entry.location, direct);
+  const location = entry.location || entry.tripName || '';
+  const direct = refData.locationImages?.[normalizeStr(location)] || refData.eventImages?.[normalizeStr(location)];
+  return imageCandidates(location, direct);
 }
 
 export function imageBox(urlOrUrls, alt = '') {
