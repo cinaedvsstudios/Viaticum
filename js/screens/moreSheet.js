@@ -9,7 +9,7 @@ import {
 } from '../services/googleAuth.js';
 import { syncAll } from '../services/syncService.js';
 
-const WEB_VERSION = 'Viaticum Web v1.9.5 — schedule scrollbar position fix';
+const WEB_VERSION = 'Viaticum Web v2.1.0 — sheet parser compatibility pass';
 
 function yesNo(value) {
   return value ? 'yes' : 'no';

@@ -1,60 +1,8 @@
 import { el } from '../utils/dom.js';
+import { parseDetailsSections, parseNameMetaLine, parseNameUrlLine } from '../utils/sheetFieldParsers.js';
 
 const clean = value => String(value || '').trim();
 const icon = (refData, key, fallback) => refData?.buttons?.[key] || fallback;
-const splitItems = value => clean(value).split('|').map(clean).filter(Boolean);
-
-function parseDetails(detailsText) {
-  const sections = { info: [], paid: [], unpaid: [], maps: [], codes: [] };
-  let active = 'info';
-
-  clean(detailsText).split('\n').map(line => line.trim()).filter(Boolean).forEach(line => {
-    const match = line.match(/^(Info|Paid|Unpaid|Maps|Codes?)\s*:\s*(.*)$/i);
-
-    if (match) {
-      const label = match[1].toLowerCase();
-      const value = clean(match[2]);
-      active = label === 'code' || label === 'codes' ? 'codes' : label;
-
-      if (value) {
-        if (active === 'info') sections.info.push(value);
-        else sections[active].push(...splitItems(value));
-      }
-      return;
-    }
-
-    if (active === 'info') sections.info.push(line);
-    else sections[active].push(...splitItems(line));
-  });
-
-  return sections;
-}
-
-function nameAndMeta(raw) {
-  const text = clean(raw);
-  if (text.includes(' - ')) {
-    const [name, ...rest] = text.split(' - ');
-    return { name: clean(name), meta: clean(rest.join(' - ')) };
-  }
-  if (text.includes(',')) {
-    const [name, ...rest] = text.split(',');
-    return { name: clean(name), meta: clean(rest.join(',')) };
-  }
-  return { name: text, meta: '' };
-}
-
-function nameAndUrl(raw) {
-  const text = clean(raw);
-  if (text.includes(' - ')) {
-    const [name, ...rest] = text.split(' - ');
-    return { name: clean(name), url: clean(rest.join(' - ')) };
-  }
-  if (text.includes(',')) {
-    const [name, ...rest] = text.split(',');
-    return { name: clean(name), url: clean(rest.join(',')) };
-  }
-  return { name: text, url: '' };
-}
 
 function infoBlock(lines, refData) {
   if (!lines.length) return '';
@@ -78,10 +26,12 @@ function pillSection(title, items, kind, refData) {
     el('h4', { class: 'vtm-detail-heading' }, title),
     el('div', { class: `vtm-pill-list vtm-${kind}-pill-list` },
       items.map(raw => {
-        const item = nameAndMeta(raw);
+        const item = parseNameMetaLine(raw);
+        const label = clean(item.meta ? `${item.name}, ${item.meta}` : item.name);
+
         return el('span', { class: `vtm-detail-pill vtm-${kind}-pill` },
           el('span', { class: 'vtm-pill-icon' }, pillIcon),
-          el('span', { class: 'vtm-pill-text' }, item.meta ? `${item.name}, ${item.meta}` : item.name)
+          el('span', { class: 'vtm-pill-text' }, label)
         );
       })
     )
@@ -96,13 +46,13 @@ function mapsSection(items, refData) {
     el('h4', { class: 'vtm-detail-heading' }, 'MAPS'),
     el('div', { class: 'vtm-map-list' },
       items.map(raw => {
-        const item = nameAndUrl(raw);
+        const item = parseNameUrlLine(raw);
         const card = el('div', { class: 'vtm-map-card' },
           el('span', { class: 'vtm-map-icon' }, mapIcon),
           el('span', { class: 'vtm-map-title' }, item.name || 'Map')
         );
 
-        if (item.url && item.url.startsWith('http')) {
+        if (item.url) {
           return el('button', {
             type: 'button',
             class: 'vtm-map-card-button',
@@ -118,6 +68,7 @@ function mapsSection(items, refData) {
 
 function codesSection(items) {
   if (!items.length) return '';
+
   return el('section', { class: 'vtm-detail-section vtm-codes-section' },
     el('h4', { class: 'vtm-detail-heading' }, 'CODES'),
     el('div', { class: 'vtm-code-list' },
@@ -129,7 +80,7 @@ function codesSection(items) {
 const divider = () => el('hr', { class: 'vtm-detail-divider' });
 
 export function detailsGrid(detailsText, refData = {}) {
-  const sections = parseDetails(detailsText);
+  const sections = parseDetailsSections(detailsText);
   const blocks = [];
 
   const info = infoBlock(sections.info, refData);
