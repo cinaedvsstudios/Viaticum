@@ -1,126 +1,18 @@
-const ACTION_LABELS = ['Preview', 'Save', 'Copy', 'Move', 'Clear', 'Cancel'];
-
-function textOf(node) {
-  return String(node?.textContent || '').replace(/\s+/g, ' ').trim();
-}
-
-function isEditScreen() {
-  return Boolean(
-    document.querySelector('.edit-screen') ||
-    [...document.querySelectorAll('h1,h2')].some(el => textOf(el).toLowerCase() === 'edit day')
-  );
-}
-
-function editScreenRoot() {
-  return document.querySelector('.edit-screen') ||
-    [...document.querySelectorAll('main,section,div')]
-      .find(el => textOf(el).includes('Edit Day') && textOf(el).includes('Location')) ||
-    document.querySelector('#app') ||
-    document.body;
-}
-
-function editTitle() {
-  return [...document.querySelectorAll('h1,h2')]
-    .find(el => textOf(el).toLowerCase() === 'edit day') || null;
-}
-
-function findEditHeaderCard() {
-  const title = editTitle();
-  const root = editScreenRoot();
-  if (!title || !root) return null;
-
-  let node = title;
-  let best = title;
-
-  while (node && node !== root && node !== document.body) {
-    const rect = node.getBoundingClientRect();
-    const style = window.getComputedStyle(node);
-    const radius = parseFloat(style.borderTopLeftRadius || '0');
-    const bg = style.backgroundColor || '';
-    const isBlueish = bg.includes('33, 150, 243') || bg.includes('41, 169') || bg.includes('76, 195') || bg.includes('rgb(33');
-    const looksLikeHeaderCard = rect.width >= 280 && rect.height >= 70 && (radius >= 10 || isBlueish);
-    if (looksLikeHeaderCard) best = node;
-    node = node.parentElement;
-  }
-
-  return best;
-}
-
-function findEditActionButtons() {
-  const buttons = [...document.querySelectorAll('button')];
-  return ACTION_LABELS
-    .map(label => buttons.find(button => textOf(button).includes(label)))
-    .filter(Boolean);
-}
-
-function sharedParent(buttons) {
-  if (!buttons.length) return null;
-  const directParent = buttons[0].parentElement;
-  if (directParent && buttons.every(button => button.parentElement === directParent)) return directParent;
-  let node = directParent;
-  while (node && node !== document.body) {
-    if (buttons.every(button => node.contains(button))) return node;
-    node = node.parentElement;
-  }
-  return directParent;
-}
-
-function markDuplicates(button) {
-  [...button.querySelectorAll('img, svg')].slice(1).forEach(node => {
-    node.dataset.viaticumDuplicateIcon = 'true';
-  });
-
-  const seen = new Set();
-  [...button.querySelectorAll('span')].forEach(span => {
-    const text = textOf(span);
-    if (!text) return;
-    if (seen.has(text)) span.dataset.viaticumDuplicateIcon = 'true';
-    seen.add(text);
-  });
-}
-
-function placeEditActionsBelowHeader() {
-  if (!isEditScreen()) return;
-  const buttons = findEditActionButtons();
-  if (buttons.length < 4) return;
-
-  const bar = sharedParent(buttons);
-  const headerCard = findEditHeaderCard();
-  if (!bar || !headerCard || bar === headerCard || bar.contains(headerCard)) return;
-
-  bar.classList.remove('vtm-edit-action-bar');
-  bar.classList.remove('vtm-edit-action-bar-top');
-  bar.classList.add('vtm-edit-action-bar-below-header');
-
-  bar.style.position = 'static';
-  bar.style.top = 'auto';
-  bar.style.bottom = 'auto';
-  bar.style.left = 'auto';
-  bar.style.right = 'auto';
-  bar.style.transform = 'none';
-
-  buttons.forEach(button => {
-    button.classList.add('vtm-edit-action-button');
-    markDuplicates(button);
-  });
-
-  if (headerCard.nextElementSibling !== bar) {
-    headerCard.insertAdjacentElement('afterend', bar);
-  }
-}
-
-function markMonthPicker() {
-  document.querySelector('.month-modal')?.classList.add('vtm-month-dropdown-modal');
-  document.querySelector('.month-modal-backdrop')?.classList.add('vtm-month-dropdown-backdrop');
-}
-
-function runFixes() {
-  placeEditActionsBelowHeader();
-  markMonthPicker();
-}
-
-new MutationObserver(runFixes).observe(document.documentElement, { childList: true, subtree: true });
-window.addEventListener('load', runFixes);
-window.addEventListener('hashchange', () => setTimeout(runFixes, 50));
-setInterval(runFixes, 500);
-runFixes();
+const ACTION_LABELS=['Preview','Save','Copy','Move','Clear','Cancel'];
+function textOf(n){return String(n?.textContent||'').replace(/\s+/g,' ').trim();}
+function normText(v){return String(v||'').replace(/[^\p{L}\p{N}]+/gu,'').toLowerCase();}
+function isEditScreen(){return Boolean(document.querySelector('.edit-screen')||[...document.querySelectorAll('h1,h2')].some(e=>textOf(e).toLowerCase()==='edit day'));}
+function editScreenRoot(){return document.querySelector('.edit-screen')||[...document.querySelectorAll('main,section,div')].find(e=>textOf(e).includes('Edit Day')&&textOf(e).includes('Location'))||document.querySelector('#app')||document.body;}
+function editTitle(){return [...document.querySelectorAll('h1,h2')].find(e=>textOf(e).toLowerCase()==='edit day')||null;}
+function findEditHeaderCard(){const t=editTitle(),r=editScreenRoot();if(!t||!r)return null;let n=t,b=t;while(n&&n!==r&&n!==document.body){const x=n.getBoundingClientRect(),s=getComputedStyle(n),rad=parseFloat(s.borderTopLeftRadius||'0');if(x.width>=260&&x.height>=70&&rad>=10)b=n;n=n.parentElement;}return b;}
+function findEditActionButtons(){const bs=[...document.querySelectorAll('button')];return ACTION_LABELS.map(l=>bs.find(b=>textOf(b).includes(l))).filter(Boolean);}
+function sharedParent(bs){if(!bs.length)return null;const p=bs[0].parentElement;if(p&&bs.every(b=>b.parentElement===p))return p;let n=p;while(n&&n!==document.body){if(bs.every(b=>n.contains(b)))return n;n=n.parentElement;}return p;}
+function markDuplicates(button){[...button.querySelectorAll('img,svg')].slice(1).forEach(n=>n.dataset.viaticumDuplicateIcon='true');const seen=new Set();[...button.querySelectorAll('span')].forEach(s=>{const t=textOf(s);if(!t)return;if(seen.has(t))s.dataset.viaticumDuplicateIcon='true';seen.add(t);});}
+function placeEditActionsBelowHeader(){if(!isEditScreen())return;const bs=findEditActionButtons();if(bs.length<4)return;const bar=sharedParent(bs),head=findEditHeaderCard();if(!bar||!head||bar===head||bar.contains(head))return;bar.classList.remove('vtm-edit-action-bar','vtm-edit-action-bar-top');bar.classList.add('vtm-edit-action-bar-below-header');Object.assign(bar.style,{position:'static',top:'auto',bottom:'auto',left:'auto',right:'auto',transform:'none'});bs.forEach(b=>{b.classList.add('vtm-edit-action-button');markDuplicates(b);});if(head.nextElementSibling!==bar)head.insertAdjacentElement('afterend',bar);}
+function findCardByHeading(label){const w=String(label).toLowerCase();return [...document.querySelectorAll('section,div')].filter(el=>{const h=el.querySelector(':scope > h1, :scope > h2, :scope > h3, :scope > header h1, :scope > header h2, :scope > header h3');return h&&textOf(h).toLowerCase()===w;}).sort((a,b)=>a.getBoundingClientRect().height-b.getBoundingClientRect().height)[0]||null;}
+function placeTripIdUnderItinerary(){if(!isEditScreen())return;const it=findCardByHeading('Itinerary text'),tr=findCardByHeading('Trip ID');if(!it||!tr||it.contains(tr))return;if(it.nextElementSibling!==tr)it.insertAdjacentElement('afterend',tr);tr.classList.add('vtm-trip-id-under-itinerary');}
+function replaceEraseEmoji(){if(!isEditScreen())return;[...document.querySelectorAll('button')].forEach(b=>{const t=textOf(b);if(t==='Erase'||t.startsWith('Erase ')){b.classList.add('vtm-erase-chip');if(b.dataset.viaticumEraseFixed!=='true'){b.textContent='❌ Erase';b.dataset.viaticumEraseFixed='true';}}});}
+function dedupeSuggestionButtons(){if(!isEditScreen())return;[findCardByHeading('Trip basics'),findCardByHeading('Itinerary text'),findCardByHeading('Details and links'),findCardByHeading('Trip ID')].filter(Boolean).forEach(card=>{[...card.querySelectorAll('div,section')].filter(row=>row.querySelectorAll(':scope > button').length>=2).forEach(row=>{const seen=new Set();[...row.querySelectorAll(':scope > button')].forEach(b=>{const key=normText(textOf(b).replace(/^❌\s*/,''));if(!key||key==='erase')return;if(seen.has(key))b.dataset.viaticumDuplicateChip='true';else{seen.add(key);delete b.dataset.viaticumDuplicateChip;}});});});}
+function markMonthPicker(){document.querySelector('.month-modal')?.classList.add('vtm-month-dropdown-modal');document.querySelector('.month-modal-backdrop')?.classList.add('vtm-month-dropdown-backdrop');}
+function runFixes(){placeEditActionsBelowHeader();placeTripIdUnderItinerary();replaceEraseEmoji();dedupeSuggestionButtons();markMonthPicker();}
+new MutationObserver(runFixes).observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('load',runFixes);window.addEventListener('hashchange',()=>setTimeout(runFixes,50));setInterval(runFixes,500);runFixes();

@@ -1,94 +1,10 @@
 import { state, setState } from '../state.js';
 import { el, button } from '../utils/dom.js';
-import {
-  signIn,
-  signOut,
-  reconnectGoogle,
-  hasClientId,
-  authDebugInfo
-} from '../services/googleAuth.js';
+import { signIn, signOut, reconnectGoogle, hasClientId, authDebugInfo } from '../services/googleAuth.js';
 import { syncAll } from '../services/syncService.js';
-
-const WEB_VERSION = 'Viaticum Web v2.3.3 — edit actions below header';
-
-function yesNo(value) {
-  return value ? 'yes' : 'no';
-}
-
-function formatExpiry(value) {
-  if (!value) return 'none';
-  try {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'invalid';
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  } catch (_) {
-    return 'invalid';
-  }
-}
-
-function debugPanel() {
-  const debug = authDebugInfo();
-  return el('section', { class: 'settings-section auth-debug-section' },
-    el('h3', {}, 'Connection debug'),
-    el('p', { class: 'muted auth-debug-line' }, `Google connected: ${yesNo(debug.googleConnected)}`),
-    el('p', { class: 'muted auth-debug-line' }, `Access token active: ${yesNo(debug.accessTokenActive)}`),
-    el('p', { class: 'muted auth-debug-line' }, `Storage available: ${yesNo(debug.storageAvailable)}`),
-    el('p', { class: 'muted auth-debug-line' }, `Token expiry: ${formatExpiry(debug.tokenExpiresAt)}`),
-    debug.lastAuthError ? el('p', { class: 'error-text auth-debug-line' }, `Last auth error: ${debug.lastAuthError}`) : ''
-  );
-}
-
-function phase2DebugPanel() {
-  return el('section', { class: 'settings-section phase2-debug-section' },
-    el('h3', {}, 'Sheet write rules'),
-    el('p', { class: 'muted auth-debug-line' }, 'Save/copy: C:I'),
-    el('p', { class: 'muted auth-debug-line' }, 'Clear day: C:H only'),
-    el('p', { class: 'muted auth-debug-line' }, 'Move day: old C:I cleared, new C:I written'),
-    el('p', { class: 'muted auth-debug-line' }, 'Trip changes: I only'),
-    el('p', { class: 'muted auth-debug-line' }, 'Write audits are logged in the browser console.')
-  );
-}
-
-export function renderMoreSheet() {
-  const debug = authDebugInfo();
-  const connectedButInactive = debug.googleConnected && !debug.accessTokenActive;
-
-  return el('div', {
-      class: 'modal-backdrop settings-backdrop',
-      onClick: e => {
-        if (e.target.classList.contains('settings-backdrop')) setState({ modal: null });
-      }
-    },
-    el('section', { class: 'settings-modal' },
-      el('header', { class: 'settings-header' },
-        el('div', {}, el('span', { class: 'settings-icon' }, '⚙️'), el('strong', {}, 'Settings')),
-        button('✕', () => setState({ modal: null }), 'settings-close')
-      ),
-      el('div', { class: 'settings-body' },
-        state.error ? el('p', { class: 'error-text settings-message' }, state.error) : '',
-        !hasClientId() ? el('p', { class: 'muted settings-message' }, 'Add a browser OAuth client ID in js/config.js to enable Google Sheets sync.') : '',
-        el('section', { class: 'settings-section' },
-          el('h3', {}, 'Account'),
-          el('p', { class: debug.accessTokenActive ? 'settings-status signed-in' : 'settings-status' }, debug.accessTokenActive ? 'Signed in to Google' : connectedButInactive ? 'Google connected, reconnect needed' : 'Not signed in to Google'),
-          debug.accessTokenActive
-            ? button('Sign out of Google', signOut, 'btn primary settings-action')
-            : connectedButInactive
-              ? button('Reconnect Google', reconnectGoogle, 'btn primary settings-action')
-              : button('Sign in with Google', signIn, 'btn primary settings-action')
-        ),
-        el('section', { class: 'settings-section' },
-          el('h3', {}, 'Sync'),
-          el('p', { class: 'muted' }, 'Pull the latest calendar, ref colours, buttons, templates and emojis from the sheet.'),
-          button('Sync now', syncAll, 'btn settings-action')
-        ),
-        el('section', { class: 'settings-section' },
-          el('h3', {}, 'Appearance'),
-          button(state.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode', () => setState({ isDarkMode: !state.isDarkMode }), 'btn settings-action')
-        ),
-        debugPanel(),
-        phase2DebugPanel(),
-        el('p', { class: 'settings-version' }, WEB_VERSION)
-      )
-    )
-  );
-}
+const WEB_VERSION = 'Viaticum Web v2.3.4 — edit panel order/chips fix';
+function yesNo(value){return value?'yes':'no';}
+function formatExpiry(value){if(!value)return 'none';try{const date=new Date(value);if(Number.isNaN(date.getTime()))return 'invalid';return date.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}catch(_){return 'invalid';}}
+function debugPanel(){const debug=authDebugInfo();return el('section',{class:'settings-section auth-debug-section'},el('h3',{},'Connection debug'),el('p',{class:'muted auth-debug-line'},`Google connected: ${yesNo(debug.googleConnected)}`),el('p',{class:'muted auth-debug-line'},`Access token active: ${yesNo(debug.accessTokenActive)}`),el('p',{class:'muted auth-debug-line'},`Storage available: ${yesNo(debug.storageAvailable)}`),el('p',{class:'muted auth-debug-line'},`Token expiry: ${formatExpiry(debug.tokenExpiresAt)}`),debug.lastAuthError?el('p',{class:'error-text auth-debug-line'},`Last auth error: ${debug.lastAuthError}`):'');}
+function phase2DebugPanel(){return el('section',{class:'settings-section phase2-debug-section'},el('h3',{},'Sheet write rules'),el('p',{class:'muted auth-debug-line'},'Save/copy: C:I'),el('p',{class:'muted auth-debug-line'},'Clear day: C:H only'),el('p',{class:'muted auth-debug-line'},'Move day: old C:I cleared, new C:I written'),el('p',{class:'muted auth-debug-line'},'Trip changes: I only'),el('p',{class:'muted auth-debug-line'},'Write audits are logged in the browser console.'));}
+export function renderMoreSheet(){const debug=authDebugInfo();const connectedButInactive=debug.googleConnected&&!debug.accessTokenActive;return el('div',{class:'modal-backdrop settings-backdrop',onClick:e=>{if(e.target.classList.contains('settings-backdrop'))setState({modal:null});}},el('section',{class:'settings-modal'},el('header',{class:'settings-header'},el('div',{},el('span',{class:'settings-icon'},'⚙️'),el('strong',{},'Settings')),button('✕',()=>setState({modal:null}),'settings-close')),el('div',{class:'settings-body'},state.error?el('p',{class:'error-text settings-message'},state.error):'',!hasClientId()?el('p',{class:'muted settings-message'},'Add a browser OAuth client ID in js/config.js to enable Google Sheets sync.'):'',el('section',{class:'settings-section'},el('h3',{},'Account'),el('p',{class:debug.accessTokenActive?'settings-status signed-in':'settings-status'},debug.accessTokenActive?'Signed in to Google':connectedButInactive?'Google connected, reconnect needed':'Not signed in to Google'),debug.accessTokenActive?button('Sign out of Google',signOut,'btn primary settings-action'):connectedButInactive?button('Reconnect Google',reconnectGoogle,'btn primary settings-action'):button('Sign in with Google',signIn,'btn primary settings-action')),el('section',{class:'settings-section'},el('h3',{},'Sync'),el('p',{class:'muted'},'Pull the latest calendar, ref colours, buttons, templates and emojis from the sheet.'),button('Sync now',syncAll,'btn settings-action')),el('section',{class:'settings-section'},el('h3',{},'Appearance'),button(state.isDarkMode?'Switch to light mode':'Switch to dark mode',()=>setState({isDarkMode:!state.isDarkMode}),'btn settings-action')),debugPanel(),phase2DebugPanel(),el('p',{class:'settings-version'},WEB_VERSION))));}
