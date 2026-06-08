@@ -11,22 +11,43 @@ function isEditScreen() {
   );
 }
 
-function editHeaderTarget() {
-  const title = [...document.querySelectorAll('h1,h2')]
-    .find(el => textOf(el).toLowerCase() === 'edit day');
+function editScreenRoot() {
+  return document.querySelector('.edit-screen') ||
+    [...document.querySelectorAll('main,section,div')]
+      .find(el => textOf(el).includes('Edit Day') && textOf(el).includes('Location')) ||
+    document.querySelector('#app') ||
+    document.body;
+}
 
-  if (!title) return null;
+function editTitle() {
+  return [...document.querySelectorAll('h1,h2')]
+    .find(el => textOf(el).toLowerCase() === 'edit day') || null;
+}
 
-  const parent = title.parentElement;
-  if (!parent) return title;
+function findEditHeaderCard() {
+  const title = editTitle();
+  const root = editScreenRoot();
+  if (!title || !root) return null;
 
-  const parentText = textOf(parent);
-  return parentText.includes('Edit Day') && parentText.length < 140 ? parent : title;
+  let node = title;
+  let best = title;
+
+  while (node && node !== root && node !== document.body) {
+    const rect = node.getBoundingClientRect();
+    const style = window.getComputedStyle(node);
+    const radius = parseFloat(style.borderTopLeftRadius || '0');
+    const bg = style.backgroundColor || '';
+    const isBlueish = bg.includes('33, 150, 243') || bg.includes('41, 169') || bg.includes('76, 195') || bg.includes('rgb(33');
+    const looksLikeHeaderCard = rect.width >= 280 && rect.height >= 70 && (radius >= 10 || isBlueish);
+    if (looksLikeHeaderCard) best = node;
+    node = node.parentElement;
+  }
+
+  return best;
 }
 
 function findEditActionButtons() {
   const buttons = [...document.querySelectorAll('button')];
-
   return ACTION_LABELS
     .map(label => buttons.find(button => textOf(button).includes(label)))
     .filter(Boolean);
@@ -34,18 +55,13 @@ function findEditActionButtons() {
 
 function sharedParent(buttons) {
   if (!buttons.length) return null;
-
   const directParent = buttons[0].parentElement;
-  if (directParent && buttons.every(button => button.parentElement === directParent)) {
-    return directParent;
-  }
-
+  if (directParent && buttons.every(button => button.parentElement === directParent)) return directParent;
   let node = directParent;
   while (node && node !== document.body) {
     if (buttons.every(button => node.contains(button))) return node;
     node = node.parentElement;
   }
-
   return directParent;
 }
 
@@ -63,18 +79,19 @@ function markDuplicates(button) {
   });
 }
 
-function placeEditActionsUnderTitle() {
+function placeEditActionsBelowHeader() {
   if (!isEditScreen()) return;
-
   const buttons = findEditActionButtons();
   if (buttons.length < 4) return;
 
   const bar = sharedParent(buttons);
-  const target = editHeaderTarget();
-  if (!bar || !target || target.contains(bar)) return;
+  const headerCard = findEditHeaderCard();
+  if (!bar || !headerCard || bar === headerCard || bar.contains(headerCard)) return;
 
   bar.classList.remove('vtm-edit-action-bar');
-  bar.classList.add('vtm-edit-action-bar-top');
+  bar.classList.remove('vtm-edit-action-bar-top');
+  bar.classList.add('vtm-edit-action-bar-below-header');
+
   bar.style.position = 'static';
   bar.style.top = 'auto';
   bar.style.bottom = 'auto';
@@ -87,8 +104,8 @@ function placeEditActionsUnderTitle() {
     markDuplicates(button);
   });
 
-  if (bar.previousElementSibling !== target) {
-    target.insertAdjacentElement('afterend', bar);
+  if (headerCard.nextElementSibling !== bar) {
+    headerCard.insertAdjacentElement('afterend', bar);
   }
 }
 
@@ -98,7 +115,7 @@ function markMonthPicker() {
 }
 
 function runFixes() {
-  placeEditActionsUnderTitle();
+  placeEditActionsBelowHeader();
   markMonthPicker();
 }
 
