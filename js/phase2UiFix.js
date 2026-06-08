@@ -11,35 +11,51 @@ function isEditScreen() {
   );
 }
 
-function closestUsefulParent(buttons) {
-  if (!buttons.length) return null;
-  const parents = [];
-  let node = buttons[0].parentElement;
+function editHeaderTarget() {
+  const title = [...document.querySelectorAll('h1,h2')]
+    .find(el => textOf(el).toLowerCase() === 'edit day');
 
-  while (node && node !== document.body) {
-    parents.push(node);
-    node = node.parentElement;
-  }
+  if (!title) return null;
 
-  return parents.find(parent => buttons.every(button => parent.contains(button))) || buttons[0].parentElement;
+  const parent = title.parentElement;
+  if (!parent) return title;
+
+  const parentText = textOf(parent);
+  return parentText.includes('Edit Day') && parentText.length < 140 ? parent : title;
 }
 
 function findEditActionButtons() {
   const buttons = [...document.querySelectorAll('button')];
+
   return ACTION_LABELS
     .map(label => buttons.find(button => textOf(button).includes(label)))
     .filter(Boolean);
 }
 
-function dedupeButtonVisuals(button) {
+function sharedParent(buttons) {
+  if (!buttons.length) return null;
+
+  const directParent = buttons[0].parentElement;
+  if (directParent && buttons.every(button => button.parentElement === directParent)) {
+    return directParent;
+  }
+
+  let node = directParent;
+  while (node && node !== document.body) {
+    if (buttons.every(button => node.contains(button))) return node;
+    node = node.parentElement;
+  }
+
+  return directParent;
+}
+
+function markDuplicates(button) {
   [...button.querySelectorAll('img, svg')].slice(1).forEach(node => {
     node.dataset.viaticumDuplicateIcon = 'true';
   });
 
-  const spans = [...button.querySelectorAll('span')];
   const seen = new Set();
-
-  spans.forEach(span => {
+  [...button.querySelectorAll('span')].forEach(span => {
     const text = textOf(span);
     if (!text) return;
     if (seen.has(text)) span.dataset.viaticumDuplicateIcon = 'true';
@@ -47,20 +63,33 @@ function dedupeButtonVisuals(button) {
   });
 }
 
-function markEditActionBar() {
+function placeEditActionsUnderTitle() {
   if (!isEditScreen()) return;
 
-  const actionButtons = findEditActionButtons();
-  if (actionButtons.length < 4) return;
+  const buttons = findEditActionButtons();
+  if (buttons.length < 4) return;
 
-  const parent = closestUsefulParent(actionButtons);
-  if (!parent) return;
+  const bar = sharedParent(buttons);
+  const target = editHeaderTarget();
+  if (!bar || !target || target.contains(bar)) return;
 
-  parent.classList.add('vtm-edit-action-bar');
-  actionButtons.forEach(button => {
+  bar.classList.remove('vtm-edit-action-bar');
+  bar.classList.add('vtm-edit-action-bar-top');
+  bar.style.position = 'static';
+  bar.style.top = 'auto';
+  bar.style.bottom = 'auto';
+  bar.style.left = 'auto';
+  bar.style.right = 'auto';
+  bar.style.transform = 'none';
+
+  buttons.forEach(button => {
     button.classList.add('vtm-edit-action-button');
-    dedupeButtonVisuals(button);
+    markDuplicates(button);
   });
+
+  if (bar.previousElementSibling !== target) {
+    target.insertAdjacentElement('afterend', bar);
+  }
 }
 
 function markMonthPicker() {
@@ -69,7 +98,7 @@ function markMonthPicker() {
 }
 
 function runFixes() {
-  markEditActionBar();
+  placeEditActionsUnderTitle();
   markMonthPicker();
 }
 

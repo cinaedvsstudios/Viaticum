@@ -1,4 +1,6 @@
-/* Viaticum Phase 2.3.1 UI hotfix. */
+/* Viaticum Phase 2.3.2 UI hotfix.
+   Edit action buttons are moved directly under the Edit Day header and never float over fields.
+*/
 
 .month-modal-backdrop,
 .vtm-month-dropdown-backdrop {
@@ -77,10 +79,16 @@
   background: transparent !important;
 }
 
-.vtm-edit-action-bar {
-  position: sticky !important;
-  bottom: var(--nav-height, 72px) !important;
-  z-index: 900 !important;
+.vtm-edit-action-bar,
+.vtm-edit-action-bar-top {
+  position: static !important;
+  inset: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  transform: none !important;
+  z-index: 1 !important;
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
@@ -88,11 +96,13 @@
   align-items: center !important;
   justify-content: space-between !important;
   width: 100% !important;
+  margin: 12px auto 18px auto !important;
   padding: 10px 12px !important;
+  border: 2px solid #8dccff !important;
   border-radius: 16px !important;
-  background: rgba(255,255,255,.96) !important;
-  box-shadow: 0 -6px 22px rgba(0,0,0,.12) !important;
-  backdrop-filter: blur(10px) !important;
+  background: #ffffff !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,.08) !important;
+  backdrop-filter: none !important;
   box-sizing: border-box !important;
 }
 
@@ -104,7 +114,8 @@
 }
 
 @media (max-width: 700px) {
-  .vtm-edit-action-bar {
+  .vtm-edit-action-bar,
+  .vtm-edit-action-bar-top {
     flex-wrap: wrap !important;
   }
 
@@ -120,5 +131,5 @@
 }
 
 .settings-version::after {
-  content: " · edit toolbar DOM fix" !important;
+  content: " · edit actions under title" !important;
 }
