@@ -31,38 +31,10 @@ export function renderEditScreen() {
 
 function formView(form) {
   const refs = state.refData;
-  const root = el('form', { class: 'edit-form', onSubmit: e => e.preventDefault() });
+  const root = el('form', { class: 'edit-form edit-form-grid', onSubmit: e => e.preventDefault() });
   const fields = {};
 
-  root.append(editCard('Trip basics',
-    fieldBlock('location', 'Location', form.location || '', refs.locations, value => fields.location.value = value, fields),
-    fieldBlock('event', 'Event', form.event || '', refs.events, value => fields.event.value = value, fields),
-    statusBlock(form, refs, fields)
-  ));
-
-  root.append(editCard('Itinerary text',
-    fieldBlock('schedule', 'Schedule', form.schedule || '', null, null, fields, 'textarea'),
-    templateButtons(refs, 'Schedule', t => appendText(fields.schedule, t.text))
-  ));
-
-  root.append(editCard('Details and links',
-    fieldBlock('details', 'Details', form.details || '', null, null, fields, 'textarea'),
-    templateButtons(refs, 'Details', t => appendText(fields.details, t.text)),
-    fieldBlock('links', 'Links', form.links || '', null, null, fields, 'textarea'),
-    adjacentLinkButtons(fields.links),
-    templateButtons(refs, 'Links', t => appendText(fields.links, t.text))
-  ));
-
-  root.append(editCard('Trip ID',
-    fieldBlock('tripName', 'Trip ID', form.tripName || '', null, null, fields),
-    el('div', { class: 'quick-row trip-pick-row' }, trips().map(t => button(t, () => fields.tripName.value = t, 'chip-btn'))),
-    el('div', { class: 'quick-row adjacent-trip-row' }, adjacentDates(form.date).map(o => button(`${o.offset > 0 ? '+' : ''}${o.offset}`, () => {
-      const e = entryByDate(o.date);
-      if (e?.tripName) fields.tripName.value = e.tripName;
-    }, 'chip-btn')))
-  ));
-
-  root.append(el('footer', { class: 'edit-actions' },
+  const actions = el('footer', { class: 'edit-actions' },
     button(`${iconFor(refs, 'Btn_Preview_Edit')} Preview`, () => alert('Preview after saving opens the day screen.'), 'btn'),
     button(`${iconFor(refs, 'Btn_Save_Edit')} Save`, async () => {
       await saveDay(readForm(form, fields));
@@ -82,8 +54,39 @@ function formView(form) {
     }, 'btn'),
     button(`${iconFor(refs, 'Icon_Clear_Day')} Clear`, async () => confirm('Clear C:H only?') && clearDay(form), 'btn danger'),
     button(`${iconFor(refs, 'Btn_Cancel_Edit')} Cancel`, goMain, 'btn cancel')
-  ));
+  );
 
+  const leftColumn = el('section', { class: 'edit-column edit-column-left' },
+    editCard('Trip basics',
+      fieldBlock('location', 'Location', form.location || '', refs.locations, value => fields.location.value = value, fields),
+      fieldBlock('event', 'Event', form.event || '', refs.events, value => fields.event.value = value, fields),
+      statusBlock(form, refs, fields)
+    ),
+    editCard('Details and links',
+      fieldBlock('details', 'Details', form.details || '', null, null, fields, 'textarea'),
+      templateButtons(refs, 'Details', t => appendText(fields.details, t.text)),
+      fieldBlock('links', 'Links', form.links || '', null, null, fields, 'textarea'),
+      adjacentLinkButtons(fields.links),
+      templateButtons(refs, 'Links', t => appendText(fields.links, t.text))
+    )
+  );
+
+  const rightColumn = el('section', { class: 'edit-column edit-column-right' },
+    editCard('Itinerary text',
+      fieldBlock('schedule', 'Schedule', form.schedule || '', null, null, fields, 'textarea'),
+      templateButtons(refs, 'Schedule', t => appendText(fields.schedule, t.text))
+    ),
+    editCard('Trip ID',
+      fieldBlock('tripName', 'Trip ID', form.tripName || '', null, null, fields),
+      el('div', { class: 'quick-row trip-pick-row' }, uniqueStrings(trips()).map(t => button(t, () => fields.tripName.value = t, 'chip-btn'))),
+      el('div', { class: 'quick-row adjacent-trip-row' }, adjacentDates(form.date).map(o => button(`${o.offset > 0 ? '+' : ''}${o.offset}`, () => {
+        const e = entryByDate(o.date);
+        if (e?.tripName) fields.tripName.value = e.tripName;
+      }, 'chip-btn')))
+    )
+  );
+
+  root.append(actions, leftColumn, rightColumn);
   return root;
 }
 
@@ -110,14 +113,15 @@ function fieldBlock(name, label, value, quickMap, quickCallback, fields, type = 
 
 function statusBlock(form, refs, fields) {
   fields.status = el('input', { name: 'status', value: form.status || '' });
+
   return el('div', { class: 'edit-field edit-field-status' },
     el('label', {},
       el('span', {}, 'Status'),
       fields.status
     ),
     el('div', { class: 'quick-row status-quick-row' },
-      button('Erase', () => fields.status.value = '', 'chip-btn danger'),
-      editableStatuses(refs).map(([name, emoji]) => button(emoji || name, () => {
+      button('❌', () => fields.status.value = '', 'chip-btn danger erase-chip-btn'),
+      uniqueStatusEntries(editableStatuses(refs)).map(([name, emoji]) => button(emoji || name, () => {
         const vals = new Set(fields.status.value.split(/[|,]/).map(x => x.trim()).filter(Boolean));
         vals.has(name) ? vals.delete(name) : vals.add(name);
         fields.status.value = [...vals].join('|');
@@ -139,8 +143,51 @@ function readForm(form, fields) {
   };
 }
 
+function uniqueKey(value) {
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '')
+    .toLowerCase();
+}
+
+function uniqueEntries(map) {
+  const seen = new Set();
+
+  return Object.entries(map || {}).filter(([name]) => {
+    const key = uniqueKey(name);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function uniqueStrings(values) {
+  const seen = new Set();
+
+  return (values || []).filter(value => {
+    const key = uniqueKey(value);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function uniqueStatusEntries(entries) {
+  const seen = new Set();
+
+  return (entries || []).filter(([name, emoji]) => {
+    const key = emoji || uniqueKey(name);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function quickPick(map, cb) {
-  return el('div', { class: 'quick-row' }, Object.entries(map || {}).map(([name, emoji]) => button(`${emoji} ${name}`, () => cb(name), 'chip-btn')));
+  return el('div', { class: 'quick-row' },
+    uniqueEntries(map).map(([name, emoji]) => button(`${emoji} ${name}`.trim(), () => cb(name), 'chip-btn'))
+  );
 }
 
 function templateButtons(refData, target, cb) {
