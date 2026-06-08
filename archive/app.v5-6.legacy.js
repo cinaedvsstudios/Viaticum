@@ -1,11 +1,10 @@
-/* Capsanoto app.js v5.7 clean working file. Legacy v5.6 copy archived in archive/app.v5-6.legacy.js. */
 const STORAGE_KEY = "forever-bound-writing-room-v2";
 const AUTH_KEY = "forever-bound-authenticated";
 const AUTH_CONFIG_PATH = "config/auth.json";
 const CONTENT_PATH = "content/documents.json";
 const EDITOR_ENTRY = "editor.html";
 const AUTOSAVE_DELAY = 600;
-const DESIGN_KEY = "capsanoto-design-settings-v5-clean";
+const DESIGN_KEY = "capsanoto-design-settings-v4";
 const HELP_KEY = "capsanoto-help-html-v1";
 const WRITING_ROOM_LAYOUT_KEY = "capsanoto-writing-room-layout-v1";
 const FAVORITE_EMOJI_KEY = "capsanoto-favorite-emojis-v1";
@@ -24,7 +23,7 @@ const GOOGLE_DRIVE_API_ROOT = "https://www.googleapis.com/drive/v3";
 const GOOGLE_DRIVE_UPLOAD_ROOT = "https://www.googleapis.com/upload/drive/v3";
 const GOOGLE_DRIVE_ROOT_FOLDER_NAME = "Capsanoto";
 const GOOGLE_DRIVE_FOLDER_MIME = "application/vnd.google-apps.folder";
-const CAPSANOTO_THEME_VERSION = "warm-copper-clean-v1";
+const CAPSANOTO_THEME_VERSION = "warm-copper-v6";
 const FILING_HIERARCHY_VERSION = 1;
 
 const CAPSANOTO_PALETTE = {
@@ -5221,7 +5220,7 @@ function ensureCurrentThemeSettings() {
 
 function purgeOldDesignStorageKeys() {
   [
-    "capsanoto-design-settings-v5-clean",
+    "capsanoto-design-settings-v1",
     "capsanoto-design-settings-v2",
     "capsanoto-design-settings-v3"
   ].forEach((key) => {

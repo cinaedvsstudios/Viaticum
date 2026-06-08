@@ -9,7 +9,7 @@ import {
 } from '../services/googleAuth.js';
 import { syncAll } from '../services/syncService.js';
 
-const WEB_VERSION = 'Viaticum Web v2.3.0 — edit toolbar/month dropdown fix';
+const WEB_VERSION = 'Viaticum Web v2.3.1 — edit toolbar DOM fix';
 
 function yesNo(value) {
   return value ? 'yes' : 'no';
@@ -17,7 +17,6 @@ function yesNo(value) {
 
 function formatExpiry(value) {
   if (!value) return 'none';
-
   try {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return 'invalid';
@@ -29,7 +28,6 @@ function formatExpiry(value) {
 
 function debugPanel() {
   const debug = authDebugInfo();
-
   return el('section', { class: 'settings-section auth-debug-section' },
     el('h3', {}, 'Connection debug'),
     el('p', { class: 'muted auth-debug-line' }, `Google connected: ${yesNo(debug.googleConnected)}`),
@@ -63,10 +61,7 @@ export function renderMoreSheet() {
     },
     el('section', { class: 'settings-modal' },
       el('header', { class: 'settings-header' },
-        el('div', {},
-          el('span', { class: 'settings-icon' }, '⚙️'),
-          el('strong', {}, 'Settings')
-        ),
+        el('div', {}, el('span', { class: 'settings-icon' }, '⚙️'), el('strong', {}, 'Settings')),
         button('✕', () => setState({ modal: null }), 'settings-close')
       ),
       el('div', { class: 'settings-body' },
@@ -74,9 +69,7 @@ export function renderMoreSheet() {
         !hasClientId() ? el('p', { class: 'muted settings-message' }, 'Add a browser OAuth client ID in js/config.js to enable Google Sheets sync.') : '',
         el('section', { class: 'settings-section' },
           el('h3', {}, 'Account'),
-          el('p', {
-            class: debug.accessTokenActive ? 'settings-status signed-in' : 'settings-status'
-          }, debug.accessTokenActive ? 'Signed in to Google' : connectedButInactive ? 'Google connected, reconnect needed' : 'Not signed in to Google'),
+          el('p', { class: debug.accessTokenActive ? 'settings-status signed-in' : 'settings-status' }, debug.accessTokenActive ? 'Signed in to Google' : connectedButInactive ? 'Google connected, reconnect needed' : 'Not signed in to Google'),
           debug.accessTokenActive
             ? button('Sign out of Google', signOut, 'btn primary settings-action')
             : connectedButInactive

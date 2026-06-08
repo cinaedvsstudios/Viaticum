@@ -1,9 +1,7 @@
-/* Viaticum Phase 2.3 UI hotfix.
-   Fixes edit-toolbar stickiness, duplicated edit suggestion icons, and month picker modal styling.
-*/
+/* Viaticum Phase 2.3.1 UI hotfix. */
 
-/* Month picker: make the existing picker behave visually like a dropdown, not a full blocking modal. */
-.month-modal-backdrop {
+.month-modal-backdrop,
+.vtm-month-dropdown-backdrop {
   position: fixed !important;
   inset: 0 !important;
   display: block !important;
@@ -12,7 +10,8 @@
   z-index: 200 !important;
 }
 
-.month-modal {
+.month-modal,
+.vtm-month-dropdown-modal {
   pointer-events: auto !important;
   position: absolute !important;
   top: 84px !important;
@@ -28,7 +27,8 @@
   box-shadow: 0 16px 40px rgba(0,0,0,.22) !important;
 }
 
-.month-modal header {
+.month-modal header,
+.vtm-month-dropdown-modal header {
   display: none !important;
 }
 
@@ -56,12 +56,7 @@
   color: #fff !important;
 }
 
-/* Keep month button readable and non-grey. */
-.month-header .month-picker-button,
-.compact-month-header .month-picker-button,
-button.month-picker-button,
 .month-picker-button,
-.month-picker-button:enabled,
 .month-picker-button:hover,
 .month-picker-button:focus,
 .month-picker-button:active {
@@ -82,22 +77,10 @@ button.month-picker-button,
   background: transparent !important;
 }
 
-/* Edit screen: bottom action toolbar should stay sticky above bottom nav. */
-.edit-screen {
-  padding-bottom: calc(var(--nav-height, 72px) + 92px) !important;
-}
-
-.edit-screen .edit-actions,
-.edit-screen .action-row,
-.edit-screen .action-bar,
-.edit-screen .edit-toolbar,
-.edit-screen .form-actions,
-.edit-screen footer,
-.edit-screen .screen-actions,
-.edit-screen .bottom-actions {
+.vtm-edit-action-bar {
   position: sticky !important;
   bottom: var(--nav-height, 72px) !important;
-  z-index: 90 !important;
+  z-index: 900 !important;
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
@@ -113,14 +96,7 @@ button.month-picker-button,
   box-sizing: border-box !important;
 }
 
-.edit-screen .edit-actions button,
-.edit-screen .action-row button,
-.edit-screen .action-bar button,
-.edit-screen .edit-toolbar button,
-.edit-screen .form-actions button,
-.edit-screen footer button,
-.edit-screen .screen-actions button,
-.edit-screen .bottom-actions button {
+.vtm-edit-action-button {
   flex: 1 1 0 !important;
   min-width: 0 !important;
   min-height: 44px !important;
@@ -128,58 +104,21 @@ button.month-picker-button,
 }
 
 @media (max-width: 700px) {
-  .edit-screen .edit-actions,
-  .edit-screen .action-row,
-  .edit-screen .action-bar,
-  .edit-screen .edit-toolbar,
-  .edit-screen .form-actions,
-  .edit-screen footer,
-  .edit-screen .screen-actions,
-  .edit-screen .bottom-actions {
+  .vtm-edit-action-bar {
     flex-wrap: wrap !important;
   }
 
-  .edit-screen .edit-actions button,
-  .edit-screen .action-row button,
-  .edit-screen .action-bar button,
-  .edit-screen .edit-toolbar button,
-  .edit-screen .form-actions button,
-  .edit-screen footer button,
-  .edit-screen .screen-actions button,
-  .edit-screen .bottom-actions button {
+  .vtm-edit-action-button {
     flex: 1 1 30% !important;
   }
 }
 
-/* Duplicate icon guard for edit suggestion/quick-pick rows. */
-.edit-screen .suggestions button img + img,
-.edit-screen .suggestions button svg + svg,
-.edit-screen .suggestion-row button img + img,
-.edit-screen .suggestion-row button svg + svg,
-.edit-screen .quick-picks button img + img,
-.edit-screen .quick-picks button svg + svg,
-.edit-screen .chips button img + img,
-.edit-screen .chips button svg + svg,
-.edit-screen .chip-row button img + img,
-.edit-screen .chip-row button svg + svg,
-.edit-screen .template-row button img + img,
-.edit-screen .template-row button svg + svg,
-.edit-screen .ref-suggestions button img + img,
-.edit-screen .ref-suggestions button svg + svg {
-  display: none !important;
-}
-
-/* If a button is rendering both an image and a duplicate emoji span, keep the image and hide the duplicate visual span. */
-.edit-screen .suggestions button img + span.emoji,
-.edit-screen .suggestion-row button img + span.emoji,
-.edit-screen .quick-picks button img + span.emoji,
-.edit-screen .chips button img + span.emoji,
-.edit-screen .chip-row button img + span.emoji,
-.edit-screen .template-row button img + span.emoji,
-.edit-screen .ref-suggestions button img + span.emoji {
+[data-viaticum-duplicate-icon="true"],
+.edit-screen button img + img,
+.edit-screen button svg + svg {
   display: none !important;
 }
 
 .settings-version::after {
-  content: " · edit toolbar/month dropdown fix" !important;
+  content: " · edit toolbar DOM fix" !important;
 }
