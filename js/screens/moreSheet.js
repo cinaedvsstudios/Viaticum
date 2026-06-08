@@ -8,8 +8,9 @@ import {
   authDebugInfo
 } from '../services/googleAuth.js';
 import { syncAll } from '../services/syncService.js';
+import { describeOperation } from '../services/operationStatus.js';
 
-const WEB_VERSION = 'Viaticum Web v2.3.5 — real edit screen fix';
+const WEB_VERSION = 'Viaticum Web v2.4.0 — operation feedback';
 
 function yesNo(value) {
   return value ? 'yes' : 'no';
@@ -46,6 +47,17 @@ function phase2DebugPanel() {
     el('p', { class: 'muted auth-debug-line' }, 'Move day: old C:I cleared, new C:I written'),
     el('p', { class: 'muted auth-debug-line' }, 'Trip changes: I only'),
     el('p', { class: 'muted auth-debug-line' }, 'Write audits are logged in the browser console.')
+  );
+}
+
+function lastOperationPanel() {
+  return el('section', { class: 'settings-section last-operation-section' },
+    el('h3', {}, 'Last sheet action'),
+    el('p', {
+      class: state.lastOperation?.ok === false
+        ? 'error-text auth-debug-line'
+        : 'muted auth-debug-line'
+    }, describeOperation(state.lastOperation))
   );
 }
 
@@ -87,6 +99,7 @@ export function renderMoreSheet() {
         ),
         debugPanel(),
         phase2DebugPanel(),
+        lastOperationPanel(),
         el('p', { class: 'settings-version' }, WEB_VERSION)
       )
     )

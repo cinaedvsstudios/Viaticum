@@ -15,6 +15,7 @@ import {
   clearDayAndTripValues,
   logWriteAudit
 } from './writeGuards.js';
+import { recordOperationSuccess, recordOperationFailure } from './operationStatus.js';
 
 function upsertLocal(entry) {
   const exists = state.entries.some(e => e.rowIndex === entry.rowIndex);
@@ -47,12 +48,24 @@ export async function syncAll() {
       fetchRange(config.mainRange)
     ]);
 
+    const parsedEntries = sortEntries(parseEntryRows(entryRows));
+
     setState({
       refData: parseRefRows(refRows),
-      entries: sortEntries(parseEntryRows(entryRows)),
+      entries: parsedEntries,
       demoMode: false
     });
+
+    recordOperationSuccess('Sync', {
+      message: `Synced ${parsedEntries.length} days`,
+      range: `${config.refRange} + ${config.mainRange}`,
+      fields: 'Read only'
+    });
   } catch (e) {
+    recordOperationFailure('Sync', e, {
+      range: `${config.refRange} + ${config.mainRange}`,
+      fields: 'Read only'
+    });
     setState({ error: e.message || String(e) });
   } finally {
     setState({ isSyncing: false });
@@ -73,7 +86,15 @@ export async function saveDay(entry) {
 
   try {
     await updateRange(range, values);
+    recordOperationSuccess('Save day', {
+      message: `Saved ${entry.date}`,
+      date: entry.date,
+      rowIndex: row,
+      range,
+      fields: 'C:I'
+    });
   } catch (e) {
+    recordOperationFailure('Save day', e, { date: entry.date, rowIndex: row, range, fields: 'C:I' });
     setState({ error: e.message || String(e) });
     throw e;
   } finally {
@@ -91,7 +112,15 @@ export async function clearDay(entry) {
 
   try {
     await updateRange(range, clearDayValues());
+    recordOperationSuccess('Clear day', {
+      message: `Cleared ${entry.date}`,
+      date: entry.date,
+      rowIndex: row,
+      range,
+      fields: 'C:H only; date/trip preserved'
+    });
   } catch (e) {
+    recordOperationFailure('Clear day', e, { date: entry.date, rowIndex: row, range, fields: 'C:H only' });
     setState({ error: e.message || String(e) });
     throw e;
   } finally {
@@ -123,7 +152,21 @@ export async function moveDay(oldEntry, newEntry) {
             : e
       ))
     });
+
+    recordOperationSuccess('Move day', {
+      message: `Moved ${oldEntry.date} to ${newEntry.date}`,
+      date: newEntry.date,
+      rowIndex: newRow,
+      range: `${oldRange} → ${newRange}`,
+      fields: 'C:I'
+    });
   } catch (e) {
+    recordOperationFailure('Move day', e, {
+      date: `${oldEntry.date} → ${newEntry.date}`,
+      rowIndex: `${oldRow} → ${newRow}`,
+      range: `${oldRange} → ${newRange}`,
+      fields: 'C:I'
+    });
     setState({ error: e.message || String(e) });
     throw e;
   } finally {
@@ -143,7 +186,15 @@ export async function updateTripCell(entry, tripName) {
 
   try {
     await updateRange(range, [[String(tripName ?? '')]]);
+    recordOperationSuccess('Update trip', {
+      message: `Updated trip for ${entry.date}`,
+      date: entry.date,
+      rowIndex: row,
+      range,
+      fields: 'I only'
+    });
   } catch (e) {
+    recordOperationFailure('Update trip', e, { date: entry.date, rowIndex: row, range, fields: 'I only' });
     setState({ error: e.message || String(e) });
     throw e;
   } finally {
@@ -170,7 +221,14 @@ export async function deleteTrip(tripName) {
       logWriteAudit('deleteTrip.clearTripCell', e, { range, fields: 'I only' });
       await updateRange(range, [['']]);
     }
+
+    recordOperationSuccess('Delete trip', {
+      message: `Removed trip ${tripName}`,
+      range: `${matches.length} trip cells`,
+      fields: 'I only'
+    });
   } catch (e) {
+    recordOperationFailure('Delete trip', e, { range: `${matches.length} trip cells`, fields: 'I only' });
     setState({ error: e.message || String(e) });
     throw e;
   } finally {

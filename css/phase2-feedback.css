@@ -1,0 +1,75 @@
+/* Viaticum Phase 2.4 operation feedback. */
+
+.status-toast {
+  position: fixed;
+  right: 18px;
+  bottom: calc(var(--nav-height, 72px) + 18px);
+  z-index: 9999;
+  width: min(420px, calc(100vw - 32px));
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 2px solid #8dccff;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #111111;
+  box-shadow: 0 14px 36px rgba(0,0,0,.18);
+  box-sizing: border-box;
+}
+
+.status-toast.success {
+  border-color: #35b95a;
+  background: #f2fff5;
+}
+
+.status-toast.error {
+  border-color: #e33d3d;
+  background: #fff2f2;
+}
+
+.status-toast-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.status-toast-main strong {
+  font-weight: 900;
+}
+
+.status-toast-main span {
+  overflow-wrap: anywhere;
+}
+
+.status-toast small {
+  grid-column: 1 / -1;
+  color: #666666;
+  overflow-wrap: anywhere;
+}
+
+.status-toast-close {
+  grid-column: 2;
+  grid-row: 1;
+  border: 0;
+  background: transparent;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: #555555;
+}
+
+.last-operation-section .auth-debug-line {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+  .status-toast {
+    left: 12px;
+    right: 12px;
+    bottom: calc(var(--nav-height, 72px) + 12px);
+    width: auto;
+  }
+}
