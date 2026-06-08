@@ -6,11 +6,16 @@ const TOKEN_KEY = 'viaticum.googleAccessToken';
 const TOKEN_EXPIRY_KEY = 'viaticum.googleAccessTokenExpiresAt';
 const LAST_AUTH_ERROR_KEY = 'viaticum.googleLastAuthError';
 
+const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
+
 const missing = () => !config.googleClientId || config.googleClientId.includes('PASTE_GOOGLE_OAUTH_CLIENT_ID_HERE');
 
 let tokenClient = null;
 let restoreAttemptInProgress = false;
 let interactiveSignInInProgress = false;
+let pendingTokenRequest = null;
+let pendingTokenResolve = null;
+let pendingTokenReject = null;
 
 export function hasClientId() {
   return !missing();
@@ -67,15 +72,22 @@ function tokenExpiryMs() {
   return Number.isFinite(value) ? value : 0;
 }
 
-function cachedToken() {
+function tokenExpiresSoon() {
+  return tokenExpiryMs() <= nowMs() + TOKEN_REFRESH_BUFFER_MS;
+}
+
+function cachedToken({ allowNearExpiry = false } = {}) {
   const token = readStorage(TOKEN_KEY);
   const expiresAt = tokenExpiryMs();
 
-  if (token && expiresAt && expiresAt > nowMs() + 120000) {
+  if (token && expiresAt && expiresAt > nowMs() + (allowNearExpiry ? 0 : TOKEN_REFRESH_BUFFER_MS)) {
     return token;
   }
 
-  clearCachedTokenOnly();
+  if (token && expiresAt && expiresAt <= nowMs()) {
+    clearCachedTokenOnly();
+  }
+
   return '';
 }
 
@@ -87,9 +99,10 @@ function cacheToken(token, expiresInSeconds) {
   writeStorage(TOKEN_EXPIRY_KEY, String(expiresAt));
 }
 
-function clearCachedTokenOnly() {
+export function clearCachedTokenOnly() {
   removeStorage(TOKEN_KEY);
   removeStorage(TOKEN_EXPIRY_KEY);
+  setState({ accessToken: '' });
 }
 
 function setConnected(value) {
@@ -114,7 +127,17 @@ function setLastAuthError(value) {
 }
 
 export function accessToken() {
-  return state.accessToken || cachedToken();
+  const token = state.accessToken || cachedToken({ allowNearExpiry: true });
+
+  if (token && !tokenExpiresSoon()) {
+    return token;
+  }
+
+  if (token && tokenExpiryMs() > nowMs()) {
+    return token;
+  }
+
+  return '';
 }
 
 export function accessTokenActive() {
@@ -201,7 +224,7 @@ export async function initAuth() {
       error: 'Restoring Google connection…'
     });
 
-    setTimeout(() => requestSilentToken(), 100);
+    setTimeout(() => requestSilentToken().catch(() => {}), 100);
     return true;
   }
 
@@ -214,22 +237,52 @@ export async function initAuth() {
   return true;
 }
 
-function requestSilentToken() {
-  if (!tokenClient) return;
+function beginPendingRequest() {
+  if (pendingTokenRequest) return pendingTokenRequest;
+
+  pendingTokenRequest = new Promise((resolve, reject) => {
+    pendingTokenResolve = resolve;
+    pendingTokenReject = reject;
+  }).finally(() => {
+    pendingTokenRequest = null;
+    pendingTokenResolve = null;
+    pendingTokenReject = null;
+  });
+
+  return pendingTokenRequest;
+}
+
+async function requestToken(promptValue = '') {
+  const ok = await ensureTokenClient();
+  if (!ok) throw new Error('Google OAuth is not configured.');
+
+  const request = beginPendingRequest();
 
   try {
-    tokenClient.requestAccessToken({ prompt: '' });
+    tokenClient.requestAccessToken({ prompt: promptValue });
   } catch (error) {
     restoreAttemptInProgress = false;
-    const message = error?.message || 'Silent Google reconnect failed.';
+    interactiveSignInInProgress = false;
+
+    const message = error?.message || 'Google token request failed.';
     setLastAuthError(message);
     clearCachedTokenOnly();
+
+    if (pendingTokenReject) pendingTokenReject(error);
+
     setState({
       accessToken: '',
       demoMode: true,
       error: 'Reconnect Google from Settings to sync Sheets data.'
     });
   }
+
+  return request;
+}
+
+function requestSilentToken() {
+  restoreAttemptInProgress = true;
+  return requestToken('');
 }
 
 function handleTokenResponse(res) {
@@ -248,6 +301,8 @@ function handleTokenResponse(res) {
       error: ''
     });
 
+    if (pendingTokenResolve) pendingTokenResolve(res.access_token);
+
     window.dispatchEvent(new CustomEvent('viaticum:auth'));
     return;
   }
@@ -255,6 +310,8 @@ function handleTokenResponse(res) {
   const message = res?.error_description || res?.error || 'Google sign-in did not return an access token.';
   setLastAuthError(message);
   clearCachedTokenOnly();
+
+  if (pendingTokenReject) pendingTokenReject(new Error(message));
 
   if (restoreAttemptInProgress) {
     restoreAttemptInProgress = false;
@@ -279,6 +336,26 @@ function handleTokenResponse(res) {
   });
 }
 
+export async function getValidAccessToken() {
+  const token = cachedToken();
+
+  if (token) {
+    if (state.accessToken !== token) setState({ accessToken: token });
+    return token;
+  }
+
+  if (!isGoogleConnected()) {
+    throw new Error('Not signed in to Google.');
+  }
+
+  return requestSilentToken();
+}
+
+export async function refreshAccessToken({ interactive = false } = {}) {
+  const promptValue = interactive || !isGoogleConnected() ? 'consent' : '';
+  return requestToken(promptValue);
+}
+
 export async function signIn() {
   const ok = await ensureTokenClient();
   if (!ok) return;
@@ -287,7 +364,7 @@ export async function signIn() {
   restoreAttemptInProgress = false;
 
   try {
-    tokenClient.requestAccessToken({ prompt: 'consent' });
+    await requestToken(isGoogleConnected() ? '' : 'consent');
   } catch (error) {
     interactiveSignInInProgress = false;
     const message = error?.message || 'Google sign-in failed.';
@@ -308,15 +385,15 @@ export async function reconnectGoogle() {
   restoreAttemptInProgress = true;
 
   try {
-    tokenClient.requestAccessToken({ prompt: '' });
+    await requestToken('');
   } catch (_) {
     restoreAttemptInProgress = false;
-    signIn();
+    await signIn();
   }
 }
 
 export function signOut() {
-  const token = state.accessToken || cachedToken();
+  const token = state.accessToken || cachedToken({ allowNearExpiry: true });
 
   if (token && window.google?.accounts?.oauth2) {
     try {

@@ -5,12 +5,13 @@ import {
   signOut,
   reconnectGoogle,
   hasClientId,
-  authDebugInfo
+  authDebugInfo,
+  refreshAccessToken
 } from '../services/googleAuth.js';
 import { syncAll } from '../services/syncService.js';
 import { describeOperation } from '../services/operationStatus.js';
 
-const WEB_VERSION = 'Viaticum Web v2.4.0 — operation feedback';
+const WEB_VERSION = 'Viaticum Web v2.5.0 — token refresh preflight';
 
 function yesNo(value) {
   return value ? 'yes' : 'no';
@@ -27,6 +28,12 @@ function formatExpiry(value) {
   }
 }
 
+function minutesRemaining(value) {
+  if (!value) return 'none';
+  const mins = Math.max(0, Math.floor((Number(value) - Date.now()) / 60000));
+  return `${mins} min`;
+}
+
 function debugPanel() {
   const debug = authDebugInfo();
   return el('section', { class: 'settings-section auth-debug-section' },
@@ -34,7 +41,8 @@ function debugPanel() {
     el('p', { class: 'muted auth-debug-line' }, `Google connected: ${yesNo(debug.googleConnected)}`),
     el('p', { class: 'muted auth-debug-line' }, `Access token active: ${yesNo(debug.accessTokenActive)}`),
     el('p', { class: 'muted auth-debug-line' }, `Storage available: ${yesNo(debug.storageAvailable)}`),
-    el('p', { class: 'muted auth-debug-line' }, `Token expiry: ${formatExpiry(debug.tokenExpiresAt)}`),
+    el('p', { class: 'muted auth-debug-line' }, `Token expiry: ${formatExpiry(debug.tokenExpiresAt)} (${minutesRemaining(debug.tokenExpiresAt)})`),
+    debug.googleConnected ? button('Refresh Google token now', () => refreshAccessToken({ interactive: false }), 'btn settings-action') : '',
     debug.lastAuthError ? el('p', { class: 'error-text auth-debug-line' }, `Last auth error: ${debug.lastAuthError}`) : ''
   );
 }
