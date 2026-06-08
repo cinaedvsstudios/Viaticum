@@ -9,7 +9,7 @@ import {
 } from '../services/googleAuth.js';
 import { syncAll } from '../services/syncService.js';
 
-const WEB_VERSION = 'Viaticum Web v2.2.0 — write safety guards';
+const WEB_VERSION = 'Viaticum Web v2.3.0 — edit toolbar/month dropdown fix';
 
 function yesNo(value) {
   return value ? 'yes' : 'no';
