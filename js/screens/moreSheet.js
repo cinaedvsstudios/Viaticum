@@ -11,7 +11,7 @@ import {
 import { syncAll } from '../services/syncService.js';
 import { describeOperation } from '../services/operationStatus.js';
 
-const WEB_VERSION = 'Viaticum Web v2.5.0 — token refresh preflight';
+const WEB_VERSION = 'Viaticum Web v2.5.1 — reconnect toast';
 
 function yesNo(value) {
   return value ? 'yes' : 'no';

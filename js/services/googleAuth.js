@@ -12,7 +12,6 @@ const missing = () => !config.googleClientId || config.googleClientId.includes('
 
 let tokenClient = null;
 let restoreAttemptInProgress = false;
-let interactiveSignInInProgress = false;
 let pendingTokenRequest = null;
 let pendingTokenResolve = null;
 let pendingTokenReject = null;
@@ -126,6 +125,19 @@ function setLastAuthError(value) {
   else removeStorage(LAST_AUTH_ERROR_KEY);
 }
 
+function showReconnectToast(message = 'Connection timed out.') {
+  setState({
+    toast: {
+      ok: false,
+      title: 'Connection timed out',
+      message,
+      actionType: 'reconnect',
+      actionLabel: 'Reconnect',
+      at: new Date().toISOString()
+    }
+  });
+}
+
 export function accessToken() {
   const token = state.accessToken || cachedToken({ allowNearExpiry: true });
 
@@ -221,17 +233,20 @@ export async function initAuth() {
     setState({
       authReady: true,
       demoMode: true,
-      error: 'Restoring Google connection…'
+      error: ''
     });
 
-    setTimeout(() => requestSilentToken().catch(() => {}), 100);
+    setTimeout(() => requestSilentToken().catch(() => {
+      showReconnectToast('Connection timed out. Reconnect to sync Sheets data.');
+    }), 100);
+
     return true;
   }
 
   setState({
     authReady: true,
     demoMode: true,
-    error: 'Sign in with Google from Settings to sync Sheets data.'
+    error: ''
   });
 
   return true;
@@ -262,7 +277,6 @@ async function requestToken(promptValue = '') {
     tokenClient.requestAccessToken({ prompt: promptValue });
   } catch (error) {
     restoreAttemptInProgress = false;
-    interactiveSignInInProgress = false;
 
     const message = error?.message || 'Google token request failed.';
     setLastAuthError(message);
@@ -273,8 +287,10 @@ async function requestToken(promptValue = '') {
     setState({
       accessToken: '',
       demoMode: true,
-      error: 'Reconnect Google from Settings to sync Sheets data.'
+      error: ''
     });
+
+    showReconnectToast('Connection timed out. Reconnect to sync Sheets data.');
   }
 
   return request;
@@ -288,7 +304,6 @@ function requestSilentToken() {
 function handleTokenResponse(res) {
   if (res?.access_token) {
     restoreAttemptInProgress = false;
-    interactiveSignInInProgress = false;
 
     setConnected(true);
     setLastAuthError('');
@@ -298,7 +313,8 @@ function handleTokenResponse(res) {
       accessToken: res.access_token,
       authReady: true,
       demoMode: false,
-      error: ''
+      error: '',
+      toast: null
     });
 
     if (pendingTokenResolve) pendingTokenResolve(res.access_token);
@@ -307,33 +323,22 @@ function handleTokenResponse(res) {
     return;
   }
 
-  const message = res?.error_description || res?.error || 'Google sign-in did not return an access token.';
+  const message = res?.error_description || res?.error || 'Google did not return an access token.';
   setLastAuthError(message);
   clearCachedTokenOnly();
 
   if (pendingTokenReject) pendingTokenReject(new Error(message));
 
-  if (restoreAttemptInProgress) {
-    restoreAttemptInProgress = false;
-
-    setState({
-      accessToken: '',
-      authReady: true,
-      demoMode: true,
-      error: 'Reconnect Google from Settings to sync Sheets data.'
-    });
-
-    return;
-  }
-
-  interactiveSignInInProgress = false;
+  restoreAttemptInProgress = false;
 
   setState({
     accessToken: '',
     authReady: true,
     demoMode: true,
-    error: message
+    error: ''
   });
+
+  showReconnectToast('Connection timed out. Reconnect to sync Sheets data.');
 }
 
 export async function getValidAccessToken() {
@@ -345,36 +350,48 @@ export async function getValidAccessToken() {
   }
 
   if (!isGoogleConnected()) {
+    showReconnectToast('Reconnect to sync Sheets data.');
     throw new Error('Not signed in to Google.');
   }
 
-  return requestSilentToken();
+  try {
+    return await requestSilentToken();
+  } catch (error) {
+    showReconnectToast('Connection timed out. Reconnect to sync Sheets data.');
+    throw error;
+  }
 }
 
 export async function refreshAccessToken({ interactive = false } = {}) {
   const promptValue = interactive || !isGoogleConnected() ? 'consent' : '';
-  return requestToken(promptValue);
+
+  try {
+    return await requestToken(promptValue);
+  } catch (error) {
+    showReconnectToast('Connection timed out. Reconnect to sync Sheets data.');
+    throw error;
+  }
 }
 
 export async function signIn() {
   const ok = await ensureTokenClient();
   if (!ok) return;
 
-  interactiveSignInInProgress = true;
   restoreAttemptInProgress = false;
 
   try {
     await requestToken(isGoogleConnected() ? '' : 'consent');
   } catch (error) {
-    interactiveSignInInProgress = false;
     const message = error?.message || 'Google sign-in failed.';
     setLastAuthError(message);
 
     setState({
       accessToken: '',
       demoMode: true,
-      error: message
+      error: ''
     });
+
+    showReconnectToast('Connection timed out. Reconnect to sync Sheets data.');
   }
 }
 
@@ -409,6 +426,7 @@ export function signOut() {
     accessToken: '',
     authReady: true,
     demoMode: true,
-    error: 'Signed out of Google.'
+    error: '',
+    toast: null
   });
 }

@@ -1,5 +1,17 @@
 import { el, button } from '../utils/dom.js';
 import { dismissToast } from '../services/operationStatus.js';
+import { reconnectGoogle } from '../services/googleAuth.js';
+
+function actionButtonFor(toast) {
+  if (toast.actionType === 'reconnect') {
+    return button(toast.actionLabel || 'Reconnect', async () => {
+      dismissToast();
+      await reconnectGoogle();
+    }, 'status-toast-action');
+  }
+
+  return '';
+}
 
 export function statusToast(state) {
   const toast = state.toast;
@@ -12,12 +24,13 @@ export function statusToast(state) {
       ariaLive: 'polite'
     },
     el('div', { class: 'status-toast-main' },
-      el('strong', {}, toast.ok ? 'Saved' : 'Problem'),
+      el('strong', {}, toast.title || (toast.ok ? 'Saved' : 'Problem')),
       el('span', {}, toast.message || '')
     ),
     toast.range || toast.fields
       ? el('small', {}, [toast.range, toast.fields].filter(Boolean).join(' · '))
       : '',
+    actionButtonFor(toast),
     button('×', dismissToast, 'status-toast-close')
   );
 }
