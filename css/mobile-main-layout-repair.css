@@ -1,0 +1,75 @@
+/* Viaticum v2.5.2 — mobile main-screen repair.
+   The desktop Phase 1 grid is intentionally !important, so this final mobile override
+   must also be !important. It restores the requested Android-style vertical order:
+   Calendar → Day → Schedule → Details.
+*/
+
+@media (max-width: 640px) {
+  .main-screen .main-dashboard-grid,
+  .main-screen .main-dashboard-grid.main-dashboard-grid-three {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Flatten the desktop-only middle wrapper so Day and Details can be ordered
+     independently alongside Calendar and Schedule. */
+  .main-screen .main-middle-stack {
+    display: contents !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .main-screen .calendar-dashboard-card { order: 1 !important; }
+  .main-screen .day-dashboard-card { order: 2 !important; }
+  .main-screen .schedule-dashboard-card { order: 3 !important; }
+  .main-screen .details-dashboard-card,
+  .main-screen .details-under-day { order: 4 !important; }
+
+  .main-screen .dashboard-card,
+  .main-screen .calendar-dashboard-card,
+  .main-screen .day-dashboard-card,
+  .main-screen .schedule-dashboard-card,
+  .main-screen .details-dashboard-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Mobile returns to normal page scrolling. The desktop panes keep their own
+     fixed-height scroll areas only above this breakpoint. */
+  .main-screen .preview-panel,
+  .main-screen .main-day-card,
+  .main-screen .details-panel,
+  .main-screen .schedule-list,
+  .main-screen .schedule-table,
+  .main-screen .day-card-schedule-preview,
+  .main-screen .day-card-schedule-preview .section-card,
+  .main-screen .details-under-day-scroll,
+  .main-screen .preview-scroll {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .main-screen .preview-scroll,
+  .main-screen .details-under-day-scroll {
+    padding-right: 0 !important;
+  }
+}
