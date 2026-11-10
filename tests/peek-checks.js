@@ -1,0 +1,48 @@
+import { openOverview } from '../js/screens/overviewScreen.js';
+const results=[];
+const assert=(ok,message)=>{if(!ok)throw new Error(message);results.push(message);};
+const settle=()=>new Promise(resolve=>setTimeout(resolve,40));
+const action=name=>[...document.querySelectorAll('.ov-header-actions button')].find(button=>button.getAttribute('aria-label')===name);
+const selected=date=>document.querySelector(`.ov-grid-scroll [aria-label="Select ${date}"]`);
+try {
+  openOverview(); await settle();
+  assert(!document.querySelector('.ov-footer'),'No bottom action bar wastes calendar space');
+  assert(['Refresh','History','Undo last action','Close ✕'].every(name=>action(name)),'Refresh, History, Undo and Close are in the top toolbar');
+  const search=document.querySelector('.ov-search'); search.value='Maspalomas';search.dispatchEvent(new Event('input',{bubbles:true}));await settle();
+  for(const date of ['2026-11-04','2026-11-05']){const box=selected(date);box.checked=true;box.dispatchEvent(new Event('change',{bubbles:true}));await settle();}
+  const visibleList=document.querySelector(matchMedia('(max-width:760px)').matches?'.ov-mobile-list':'.ov-grid-scroll');
+  visibleList.scrollTop=130; visibleList.scrollLeft=30;
+  const oldTop=visibleList.scrollTop,oldLeft=visibleList.scrollLeft;
+  document.querySelector('.ov-selection-bar [aria-label="Edit selected days"]').click();await settle();
+  assert(action('Review changes')&&action('Cancel'),'Review and Cancel sit beside Close in the header');
+  assert(!document.querySelector('.ov-editor-footer'),'Editor actions are removed from the bottom');
+  const labels=[...document.querySelectorAll('.ov-header-actions .ov-action-label')].map(node=>node.textContent);
+  assert(labels.every(label=>!label.trim().includes(' ')),'Every header action has a one-word label');
+  const colours=[...document.querySelectorAll('.ov-header-actions .ov-button')].map(node=>getComputedStyle(node).backgroundColor);
+  assert(new Set(colours).size===colours.length,'Each header action has its own colour');
+  assert([...document.querySelectorAll('.ov-header-actions .ov-button')].every(node=>node.querySelector('.ov-action-icon')),'Every header action includes an icon or emoji');
+  const details=document.querySelector('[aria-label="Edit Details"]');details.value='Unsaved hotel comment';details.dispatchEvent(new Event('input',{bubbles:true}));
+  const editor=document.querySelector('.ov-editor');editor.scrollTop=90;const editorScroll=editor.scrollTop;
+  const peek=action('Hold to peek at Overview');
+  const press=type=>peek.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,pointerType:type,pointerId:1,button:0}));
+  press('mouse');
+  assert(document.querySelector('.ov-backdrop').classList.contains('ov-is-peeking'),'Holding Peek reveals the Overview instead of navigating away');
+  const surface=document.querySelector('.ov-peek-surface');
+  assert(!surface.hidden&&getComputedStyle(editor).visibility==='hidden','Only the editor is hidden while holding');
+  assert(surface.querySelector('.ov-search').value==='Maspalomas','Peek retains the original search filter');
+  assert(surface.querySelectorAll('.ov-table tbody tr').length===5,'Peek shows the same five filtered dates');
+  assert(surface.querySelectorAll('.ov-grid-scroll input[type=checkbox]:checked').length===2,'Peek retains the original selected days');
+  const snapshotList=surface.querySelector(matchMedia('(max-width:760px)').matches?'.ov-mobile-list':'.ov-grid-scroll');
+  assert(snapshotList.scrollTop===oldTop&&snapshotList.scrollLeft===oldLeft,'Peek retains the original table scroll position');
+  window.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:1}));
+  assert(surface.hidden&&!document.querySelector('.ov-is-peeking'),'Releasing outside the button immediately restores the editor');
+  assert(document.querySelector('.ov-editor')===editor&&details.value==='Unsaved hotel comment'&&editor.scrollTop===editorScroll,'Peek preserves the actual edit controls, unsaved text and editor scroll');
+  press('touch');peek.dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerId:1}));
+  assert(surface.hidden,'A cancelled touch restores the editor');
+  peek.dispatchEvent(new KeyboardEvent('keydown',{key:' ',bubbles:true,cancelable:true}));assert(!surface.hidden,'Keyboard Space can hold Peek');
+  peek.dispatchEvent(new KeyboardEvent('keyup',{key:' ',bubbles:true,cancelable:true}));assert(surface.hidden,'Releasing Space restores the editor');
+  press('touch');window.dispatchEvent(new Event('blur'));assert(surface.hidden,'Losing window focus cannot leave Peek stuck open');
+  press('mouse');peek.dispatchEvent(new PointerEvent('lostpointercapture',{bubbles:true,pointerId:1}));assert(surface.hidden,'Losing pointer capture restores the editor');
+  assert(document.querySelector('.ov-modal').scrollWidth<=document.querySelector('.ov-modal').clientWidth+1,'The compact header fits the viewport without horizontal overflow');
+  const report=document.createElement('aside');report.id='qa-results';report.style='position:fixed;bottom:0;right:0;z-index:9999;background:#dff5e8;color:#154f31;padding:8px;font:12px system-ui';report.textContent=`PASS: ${results.length} colour, header and Peek checks`;document.body.append(report);
+}catch(error){const report=document.createElement('aside');report.id='qa-results';report.style='position:fixed;top:0;left:0;z-index:9999;background:#fdd;color:#700;padding:16px;max-width:500px;font:13px system-ui';report.textContent=`FAIL: ${error.stack}\nPassed: ${results.join('; ')}`;document.body.append(report);}

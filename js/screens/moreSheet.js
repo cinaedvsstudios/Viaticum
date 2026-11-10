@@ -11,7 +11,7 @@ import {
 import { syncAll } from '../services/syncService.js';
 import { describeOperation } from '../services/operationStatus.js';
 
-const WEB_VERSION = 'Viaticum Web v3.0.0 — day Overview and imports';
+const WEB_VERSION = 'Viaticum Web v3.0.1 — colourful Overview and hold to peek';
 
 function yesNo(value) {
   return value ? 'yes' : 'no';

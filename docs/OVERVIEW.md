@@ -4,6 +4,8 @@ Overview replaces Sync in the bottom navigation. **Settings → Sync now** remai
 
 Open a day's **Edit** action, change only the fields you need, choose Append or Replace, then use **Apply to dates** to add individual dates or a range. Use **Review changes** to inspect every affected date before confirming. Only checked fields change. Blank boxes preserve existing information. Select Clear explicitly to empty a field. Trip ID supports Replace or Clear, because one day belongs to one trip. New trip memberships must cover more than one date and include a location outside Berlin.
 
+The coloured header holds Review, Cancel, Refresh, History, Undo and Close; there is no bottom action bar. Buttons have compact one-word labels and emojis. Hold **👁️ Peek** while editing to see the Overview table exactly as it appeared before opening the editor, including its selected dates, filters, expanded records and scroll position. Releasing the mouse, finger or keyboard key restores the same editor and unsaved text. Peek does not navigate, save, discard, or change which calendar day is selected. On a keyboard, hold Space or Enter while Peek is focused.
+
 Examples:
 
 - Open 4 November, change the appropriate field to indicate you are not going, add 4–8 November, review, and save once.

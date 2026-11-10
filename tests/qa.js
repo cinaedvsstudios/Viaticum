@@ -39,3 +39,4 @@ initRouter(document.getElementById('app'));
 await refreshOverview();
 setState({refData:{statuses:{Maybe:'❔',Booked:'✅','Not going':'❌'},locations:{'Köln':'🏰',Berlin:'🐻',Maspalomas:'🏖️'},events:{},buttons:{},schedules:{},templates:[],colorsLight:{Header_Sched_Bg:'#ffca35'},colorsDark:{}},demoMode:false,authReady:true,selectedDate:'2026-11-26'});
 if(new URLSearchParams(location.search).has('auto')) await import('./ui-checks.js');
+if(new URLSearchParams(location.search).has('peek')) await import('./peek-checks.js');

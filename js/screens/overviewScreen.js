@@ -15,6 +15,36 @@ const localKey = `viaticum:overview:views:${config.spreadsheetId}`;
 const views = () => { try { return JSON.parse(localStorage.getItem(localKey) || '[]'); } catch { return []; } };
 const dirty = () => session && (session.drafts.size || session.editor?.touched || session.importing);
 const tab = () => config.mainRange.split('!')[0].replace(/^'|'$/g, '');
+const FIELD_ICONS = { location: '📍', event: '🎉', schedule: '🕒', status: '🏷️', details: '📝', links: '🔗', tripName: '🧳', date: '📅', time: '🕒', source: '📥' };
+const ACTIONS = {
+  'Close ✕': ['❌', 'Close', 'rose'], 'Review changes': ['🔍', 'Review', 'green'],
+  'Confirm and save': ['💾', 'Save', 'green'], 'Confirm import and save': ['💾', 'Save', 'green'],
+  'Cancel': ['↩️', 'Cancel', 'peach'], 'Back': ['⬅️', 'Back', 'pink'], 'Back to Overview': ['⬅️', 'Back', 'pink'],
+  'Refresh': ['🔄', 'Refresh', 'blue'], 'History': ['📜', 'History', 'purple'], 'Undo last action': ['⏪', 'Undo', 'yellow'],
+  'Import Backroom Events': ['🎉', 'Backroom', 'pink'], 'AI-Augmented Import': ['🎟️', 'Bookings', 'purple'],
+  'Edit selected days': ['✏️', 'Edit', 'green'], 'Edit': ['✏️', 'Edit', 'blue'], 'Copy to…': ['📋', 'Copy', 'purple'],
+  'Deselect': ['🧹', 'None', 'cyan'], 'Reset': ['🔁', 'Reset', 'peach'],
+  'Review pending edits': ['🔍', 'Review', 'green'], 'Discard pending edits': ['🧹', 'Discard', 'peach'],
+  'Add date range': ['📅', 'Range', 'yellow'], 'Clear date selection': ['🧹', 'Deselect', 'pink'],
+  'Merge both': ['🔀', 'Merge', 'green'], 'Keep current': ['🛡️', 'Keep', 'blue'], 'Use imported only': ['📥', 'Replace', 'pink'],
+  'Cancel import': ['↩️', 'Cancel', 'peach'], 'Preview day changes': ['🔍', 'Review', 'green'],
+  'Back to matching': ['⬅️', 'Back', 'pink'], 'Save current view': ['💾', 'Save', 'green'],
+  'Delete saved view': ['🗑️', 'Delete', 'rose'], 'Download example JSON': ['📄', 'Example', 'yellow']
+};
+function actionStyle(name) {
+  if (ACTIONS[name]) return ACTIONS[name];
+  const headingName = name.replace(/ [↑↓]$/, '');
+  const field = FIELDS.find(([, title]) => title === headingName)?.[0] || ({ Date: 'date', Time: 'time', Source: 'source' })[headingName];
+  if (field) return [FIELD_ICONS[field], name, field];
+  const hash = [...name].reduce((n, c) => n + c.codePointAt(0), 0);
+  return [/\p{Extended_Pictographic}/u.test(name) ? '' : '🏷️', name, ['blue', 'pink', 'yellow', 'purple', 'green', 'peach'][hash % 6]];
+}
+function statusOptions() {
+  const seen = new Set();
+  return ['Maybe', 'Booked', ...editableStatuses(state.refData).map(([name]) => name)].filter(name => {
+    const key = name.toLowerCase(); if (seen.has(key)) return false; seen.add(key); return true;
+  });
+}
 function draw() {
   const active = document.activeElement, key = active?.dataset?.focus;
   const selection = active && 'selectionStart' in active ? [active.selectionStart, active.selectionEnd] : null;
@@ -27,11 +57,17 @@ function draw() {
   }
 }
 function act(label, callback, className = '') {
-  return button(label, async () => {
+  const [icon, caption, colour] = actionStyle(label);
+  const control = button('', async () => {
     if (session.busy) return;
     try { session.error = ''; await callback(); }
     catch (error) { if (session) { session.error = error.message || String(error); draw(); } }
-  }, `ov-button ${className}`);
+  }, `ov-button ov-colour-${colour} ${className}`);
+  control.setAttribute('aria-label', label);
+  control.title = label;
+  if (icon) control.append(el('span', { class: 'ov-action-icon', 'aria-hidden': 'true' }, icon));
+  control.append(el('span', { class: 'ov-action-label' }, caption));
+  return control;
 }
 function input(type, value, onInput, key, attrs = {}) {
   return el('input', { type, value: value || '', dataset: { focus: key }, 'aria-label': attrs['aria-label'] || key, [type === 'date' || type === 'month' ? 'onChange' : 'onInput']: e => onInput(e.target.value), ...attrs });
@@ -42,8 +78,46 @@ function select(value, options, change, label) {
 function check(checked, change, label) {
   return el('input', { type: 'checkbox', checked, 'aria-label': label, onChange: e => change(e.target.checked) });
 }
-function label(name, control) { return el('label', { class: 'ov-control' }, el('span', {}, name), control); }
-function heading(title, detail = '') { return el('div', {}, el('h2', {}, title), detail ? el('p', { class: 'ov-muted' }, detail) : ''); }
+function label(name, control) { return el('label', { class: 'ov-control' }, el('span', {}, `${FIELD_ICONS[FIELDS.find(([, title]) => title === name)?.[0]] || ({View:'👓',Month:'📅',From:'📅',To:'📅',Venue:'🏠',Trip:'🧳',Source:'📥','Saved view':'⭐','Choose JSON file':'📂'}[name]) || '🔎'} ${name}`), control); }
+function heading(title, detail = '') { return el('div', {}, el('h2', {}, `${title.startsWith('Edit') || title.startsWith('Copy') ? '✏️' : title.startsWith('Review') ? '🔍' : title.startsWith('Apply') ? '📅' : title.startsWith('History') ? '📜' : '📥'} ${title}`), detail ? el('p', { class: 'ov-muted' }, detail) : ''); }
+function captureOverview() {
+  const current = document.querySelector('.ov-table-view');
+  if (!current) return;
+  const clone = current.cloneNode(true);
+  const originals = current.querySelectorAll('input,textarea,select,details');
+  clone.querySelectorAll('input,textarea,select,details').forEach((node, i) => {
+    if ('value' in node) node.value = originals[i].value;
+    if ('checked' in node) node.checked = originals[i].checked;
+    if ('open' in node) node.open = originals[i].open;
+  });
+  clone.inert = true;
+  clone.setAttribute('aria-hidden', 'true');
+  session.peekSnapshot = { node: clone, scroll: [...current.querySelectorAll('[data-scroll]')].map(n => ({ key: n.dataset.scroll, top: n.scrollTop, left: n.scrollLeft })) };
+}
+function setPeek(active) {
+  const root = document.querySelector('.ov-backdrop'), surface = root?.querySelector('.ov-peek-surface');
+  if (!surface || !session?.peekSnapshot) return;
+  root.classList.toggle('ov-is-peeking', active);
+  surface.hidden = !active;
+  if (active) {
+    const content = root.querySelector('[data-ov-content]');
+    surface.style.top = `${content.getBoundingClientRect().top - root.querySelector('.ov-modal').getBoundingClientRect().top}px`;
+  }
+  root.querySelector('.ov-peek-button')?.setAttribute('aria-pressed', String(active));
+  if (active) for (const { key, top, left } of session.peekSnapshot.scroll) {
+    const node = surface.querySelector(`[data-scroll="${key}"]`); if (node) { node.scrollTop = top; node.scrollLeft = left; }
+  }
+}
+function peekButton() {
+  const stop = () => setPeek(false);
+  return el('button', { type: 'button', class: 'ov-button ov-colour-cyan ov-peek-button', 'aria-label': 'Hold to peek at Overview', 'aria-pressed': 'false', title: 'Hold to see the Overview exactly as you left it; release to return',
+    onPointerdown: event => { if (event.pointerType === 'mouse' && event.button !== 0) return; event.preventDefault(); try { event.currentTarget.setPointerCapture(event.pointerId); } catch {} setPeek(true); },
+    onPointerup: stop, onPointercancel: stop, onLostpointercapture: stop,
+    onKeydown: event => { if ([' ', 'Enter'].includes(event.key)) { event.preventDefault(); if (!event.repeat) setPeek(true); } },
+    onKeyup: event => { if ([' ', 'Enter'].includes(event.key)) { event.preventDefault(); stop(); } },
+    onBlur: stop, onContextmenu: event => event.preventDefault(), onClick: event => event.preventDefault()
+  }, el('span', { class: 'ov-action-icon', 'aria-hidden': 'true' }, '👁️'), el('span', { class: 'ov-action-label' }, 'Peek'));
+}
 function downloadable(name, data, type = 'application/json') {
   const url = URL.createObjectURL(new Blob([data], { type }));
   const link = el('a', { href: url, download: name }); document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -96,6 +170,7 @@ function beginEditor(entry = null, copy = false) {
   const dates = entry ? [entry.date] : [...session.selected];
   if (!dates.length) throw new Error('Select a day to edit.');
   const source = entry || state.entries.find(e => e.date === dates[0]);
+  captureOverview();
   session.editor = { dates: new Set(dates), source: { ...source }, copy, touched: false, from: dates.slice().sort()[0], to: dates.slice().sort().at(-1),
     patches: Object.fromEntries(FIELDS.map(([key]) => [key, { enabled: false, value: copy || dates.length === 1 ? text(source[key]) : '', mode: 'append' }])) };
   session.screen = 'editor'; draw();
@@ -118,7 +193,7 @@ function filterControl(field, name, values) {
 }
 function toolbar() {
   const f = session.filters;
-  return el('section', { class: 'ov-tools' },
+  return el('section', { class: 'ov-tools', dataset: { scroll: 'tools' } },
     el('div', { class: 'ov-search-line' },
       input('search', f.query, value => { f.query = value; draw(); }, 'search', { class: 'ov-search', placeholder: 'Search events, locations, notes or booking references…', 'aria-label': 'Search Overview' }),
       act('Import Backroom Events', () => startImport('backroom')),
@@ -130,7 +205,7 @@ function toolbar() {
       el('div', { class: 'ov-range-controls' }, label('From', input('date', f.from, value => { f.from = value; f.preset = 'custom'; draw(); }, 'range-from')), label('To', input('date', f.to, value => { f.to = value; f.preset = 'custom'; draw(); }, 'range-to'))),
       act('Reset', () => { session.filters = initialFilters(); draw(); })
     ),
-    el('details', { class: 'ov-more-filters' }, el('summary', {}, 'Filters, saved views and columns'),
+    el('details', { class: 'ov-more-filters' }, el('summary', {}, '🎛️ Filters, saved views and columns'),
       el('div', { class: 'ov-mobile-ranges ov-filter-row' }, label('From', input('date', f.from, value => { f.from = value; f.preset = 'custom'; draw(); }, 'mobile-range-from')), label('To', input('date', f.to, value => { f.to = value; f.preset = 'custom'; draw(); }, 'mobile-range-to'))),
       el('div', { class: 'ov-filter-row' },
         filterControl('status', 'Status', state.entries.flatMap(e => tokens(e.status))),
@@ -148,7 +223,7 @@ function toolbar() {
         }),
         act('Delete saved view', () => { const name = prompt('Name of the saved view to delete'); if (name && confirm(`Delete saved view “${name}”?`)) { localStorage.setItem(localKey, JSON.stringify(views().filter(v => v.name !== name))); draw(); } })
       ),
-      el('div', { class: 'ov-column-picks' }, [...FIELDS, ['time', 'Time'], ['source', 'Source']].map(([key, title]) => el('label', {}, check(session.columns.has(key), value => { value ? session.columns.add(key) : session.columns.delete(key); draw(); }, `Show ${title}`), title)))
+      el('div', { class: 'ov-column-picks' }, [...FIELDS, ['time', 'Time'], ['source', 'Source']].map(([key, title]) => el('label', {}, check(session.columns.has(key), value => { value ? session.columns.add(key) : session.columns.delete(key); draw(); }, `Show ${title}`), `${FIELD_ICONS[key]} ${title}`)))
     )
   );
 }
@@ -163,7 +238,7 @@ function editableCell(entry, field, mobile = false) {
   );
 }
 function updatePending() {
-  const node = document.querySelector('.ov-pending'); if (node) node.textContent = `${session.drafts.size} day(s) with pending edits`;
+  const node = document.querySelector('.ov-pending'); if (node) { node.textContent = `${session.drafts.size} day(s) with pending edits`; node.hidden = !session.drafts.size; }
   document.querySelectorAll('[data-pending-button]').forEach(n => { n.disabled = !session.drafts.size; });
 }
 function tableView() {
@@ -180,7 +255,7 @@ function tableView() {
     ),
     el('div', { class: 'ov-grid-scroll', dataset: { scroll: 'table' } },
       el('table', { class: 'ov-table' },
-        el('thead', {}, el('tr', {}, el('th', {}, 'Select'), ...[['date', 'Date'], ...columns].map(([key, title]) => el('th', {}, act(`${title}${session.sort === key ? session.descending ? ' ↓' : ' ↑' : ''}`, () => { session.descending = session.sort === key ? !session.descending : false; session.sort = key; draw(); }))), el('th', {}, 'Actions'))),
+        el('thead', {}, el('tr', {}, el('th', {}, '☑️ Select'), ...[['date', 'Date'], ...columns].map(([key, title]) => el('th', { dataset: { column: key } }, act(`${title}${session.sort === key ? session.descending ? ' ↓' : ' ↑' : ''}`, () => { session.descending = session.sort === key ? !session.descending : false; session.sort = key; draw(); }))), el('th', {}, '🛠️ Actions'))),
         el('tbody', {}, rows.map(entry => el('tr', { class: session.selected.has(entry.date) ? 'ov-selected' : '' },
           el('td', {}, check(session.selected.has(entry.date), value => rowSelect(entry, value), `Select ${entry.date}`)),
           el('th', { scope: 'row' }, el('time', { datetime: entry.date }, formatShort(entry.date)), el('small', {}, entry.date)),
@@ -194,7 +269,7 @@ function tableView() {
       el('header', {}, check(session.selected.has(entry.date), value => rowSelect(entry, value), `Select mobile ${entry.date}`), el('strong', {}, formatShort(entry.date)), statusChips(entry.status, state.refData)),
       el('p', {}, `${entry.location}${entry.location && entry.event ? ' · ' : ''}${entry.event}`),
       el('div', { class: 'ov-actions' }, act('Edit', () => beginEditor(entry)), act('Copy to…', () => beginEditor(entry, true))),
-      el('details', {}, el('summary', {}, 'Show fields'), FIELDS.filter(([key]) => session.columns.has(key)).map(([field, title]) => label(title, editableCell(entry, field, true)))))))
+      el('details', {}, el('summary', {}, '🔎 Show fields'), FIELDS.filter(([key]) => session.columns.has(key)).map(([field, title]) => label(title, editableCell(entry, field, true)))))))
   );
 }
 function editorView() {
@@ -206,15 +281,15 @@ function editorView() {
     dates.forEach(date => editor.dates.add(date)); editor.touched = true; draw();
   };
   return el('section', { class: 'ov-editor', dataset: { scroll: 'editor' } },
-    el('div', { class: 'ov-subheading' }, heading(editor.copy ? `Copy fields from ${formatShort(editor.source.date)}` : 'Edit days', 'Only checked fields change. Blank boxes preserve existing text; choose Clear explicitly to erase a field.'), act('Back to Overview', backToTable)),
+    el('div', { class: 'ov-subheading' }, heading(editor.copy ? `Copy fields from ${formatShort(editor.source.date)}` : 'Edit days', 'Only checked fields change. Blank boxes preserve existing text; choose Clear explicitly to erase a field.')),
     el('div', { class: 'ov-editor-fields' }, FIELDS.map(([key, title]) => {
       const patch = editor.patches[key];
       const changeValue = value => { patch.value = value; patch.enabled = true; editor.touched = true; const row = document.querySelector(`[data-field="${key}"]`); row?.classList.add('ov-field-enabled'); if (row) row.querySelector('input[type=checkbox]').checked = true; };
       return el('section', { class: `ov-edit-field ${patch.enabled ? 'ov-field-enabled' : ''}`, dataset: { field: key } },
-        el('header', {}, el('label', {}, check(patch.enabled, value => { patch.enabled = value; editor.touched = true; draw(); }, `Change ${title}`), el('strong', {}, title)),
+        el('header', {}, el('label', {}, check(patch.enabled, value => { patch.enabled = value; editor.touched = true; draw(); }, `Change ${title}`), el('strong', {}, `${FIELD_ICONS[key]} ${title}`)),
           select(patch.mode, key === 'tripName' ? [['replace', 'Replace'], ['clear', 'Clear']] : [['append', 'Append'], ['replace', 'Replace'], ['clear', 'Clear']], value => { patch.mode = value; patch.enabled = true; editor.touched = true; draw(); }, `${title} operation`)),
         el('textarea', { rows: ['schedule', 'details', 'links'].includes(key) ? 5 : 2, disabled: patch.mode === 'clear', dataset: { focus: `edit-${key}` }, 'aria-label': `Edit ${title}`, onInput: e => changeValue(e.target.value) }, patch.value),
-        key === 'status' ? el('div', { class: 'ov-chip-picks' }, unique(['Maybe', 'Booked', ...editableStatuses(state.refData).map(([name]) => name)]).map(name => act(`${state.refData.statuses?.[name] || ''} ${name}`, () => { const current = tokens(patch.value); changeValue(current.includes(name) ? current.filter(v => v !== name).join('|') : [...current, name].join('|')); draw(); }))) : '',
+        key === 'status' ? el('div', { class: 'ov-chip-picks' }, statusOptions().map(name => act(`${state.refData.statuses?.[name] || ({Maybe:'❔',Booked:'✅'}[name]) || ''} ${name}`, () => { const current = tokens(patch.value), has = current.some(value => value.toLowerCase() === name.toLowerCase()); changeValue(has ? current.filter(value => value.toLowerCase() !== name.toLowerCase()).join('|') : [...current, name].join('|')); draw(); }))) : '',
         key === 'tripName' ? el('small', { class: 'ov-muted' }, 'For trips outside Berlin covering more than one date.') : ''
       );
     })),
@@ -291,7 +366,7 @@ function importView() {
     el('div', { class: 'ov-subheading' }, heading(imp.source === 'backroom' ? 'Import Backroom Events' : 'AI-Augmented Import', imp.source === 'backroom' ? 'Selected dates, times, locations and party names only. New events are Maybe. Recurrence is not expanded.' : 'Confirmed tickets and reservations only. New bookings are Booked. Original PDFs and images stay outside Viaticum.'), act('Cancel import', back)),
     imp.step === 'upload' ? el('div', { class: 'ov-upload' },
       label('Choose JSON file', el('input', { type: 'file', accept: '.json,application/json', 'aria-label': 'Import JSON file', onChange: async e => { try { await readImport(e.target.files[0]); } catch (error) { session.error = error.message; draw(); } } })),
-      imp.source === 'ai' ? el('div', {}, act('Download example JSON', () => downloadable('viaticum-import-example.json', JSON.stringify(AI_EXAMPLE, null, 2))), el('a', { href: new URL('../../docs/AI_IMPORT.md', import.meta.url).href, download: 'Viaticum-ChatGPT-instructions.md', class: 'ov-button' }, 'Download ChatGPT instructions'), el('p', {}, 'Use these instructions with your booking documents in ChatGPT, then upload the resulting JSON file here. Missing information stays blank.')) : ''
+      imp.source === 'ai' ? el('div', {}, act('Download example JSON', () => downloadable('viaticum-import-example.json', JSON.stringify(AI_EXAMPLE, null, 2))), el('a', { href: new URL('../../docs/AI_IMPORT.md', import.meta.url).href, download: 'Viaticum-ChatGPT-instructions.md', class: 'ov-button', 'aria-label': 'Download ChatGPT instructions' }, '🤖 Instructions'), el('p', {}, 'Use these instructions with your booking documents in ChatGPT, then upload the resulting JSON file here. Missing information stays blank.')) : ''
     ) : '',
     imp.parsed ? el('p', { class: 'ov-import-counts' }, `${imp.parsed.supplied} input record(s) · ${imp.items.filter(i => i.kind === 'new').length} new · ${imp.items.filter(i => ['merge', 'review'].includes(i.kind)).length} to merge/review · ${imp.items.filter(i => i.kind === 'duplicate').length} already imported · ${imp.parsed.errors.length} invalid`) : '',
     imp.parsed?.errors.length ? el('section', { class: 'ov-warning' }, el('strong', {}, 'These records cannot be imported:'), el('ul', {}, imp.parsed.errors.map(error => el('li', {}, `Record ${error.index} ${error.name}: ${error.message}`))), el('label', {}, check(imp.acceptErrors, value => { imp.acceptErrors = value; draw(); }, 'Skip listed invalid records'), 'I reviewed these errors; skip the listed invalid records.')) : '',
@@ -333,8 +408,33 @@ function historyView() {
     operationHistory().length ? operationHistory().map(op => el('article', {}, el('strong', {}, `${op.label} · ${op.ok ? op.undone ? 'Undone' : 'Saved' : 'Failed'}`), el('p', {}, `${new Date(op.at).toLocaleString()} · ${op.days?.length || 0} day(s)`), op.error ? el('p', {}, op.error) : '')) : el('p', {}, 'No import or bulk-edit operations recorded in this browser.')
   );
 }
+function headerUtilities() {
+  return [
+    act('Refresh', async () => { if (dirty()) throw new Error('Save or discard unsaved changes before refreshing.'); session.busy = true; draw(); try { await refreshOverview(); session.message = 'Calendar refreshed.'; } finally { session.busy = false; draw(); } }),
+    act('History', () => { if (session.editor || session.importing) throw new Error('Finish or cancel the current editor/import first.'); session.screen = 'history'; draw(); }),
+    act('Undo last action', async () => {
+      if (dirty()) throw new Error('Save or discard unsaved changes before Undo.');
+      const op = lastUndoable(); if (!op) throw new Error('There is no action to undo in this browser.');
+      if (!confirm(`Undo “${op.label}” for ${op.days.length} day(s)?`)) return;
+      session.busy = true; draw(); try { await undoLastOperation(); session.message = 'Last action undone.'; } finally { session.busy = false; draw(); }
+    })
+  ];
+}
 export function renderOverview() {
   if (!session) openOverview();
+  const content = session.screen === 'table' ? tableView() : session.screen === 'editor' ? editorView() : session.screen === 'preview' ? previewView() : session.screen === 'import' ? importView() : historyView();
+  content.dataset.ovContent = '';
+  const workflow = [...content.querySelectorAll('.ov-editor-footer > button, .ov-subheading > .ov-button')];
+  content.querySelectorAll('.ov-editor-footer').forEach(footer => footer.remove());
+  const pending = [];
+  if (session.screen === 'table') {
+    const review = act('Review pending edits', saveInline, 'ov-primary'); review.dataset.pendingButton = 'save'; review.disabled = !session.drafts.size;
+    const discard = act('Discard pending edits', () => { if (confirm('Discard pending table edits?')) { session.drafts.clear(); draw(); } }); discard.dataset.pendingButton = 'discard'; discard.disabled = !session.drafts.size;
+    pending.push(review, discard);
+  }
+  const canPeek = session.peekSnapshot && (session.screen === 'editor' || session.screen === 'preview' && session.editor);
+  const peekSurface = el('div', { class: 'ov-peek-surface', hidden: true });
+  if (canPeek) peekSurface.append(session.peekSnapshot.node);
   const root = el('div', { class: 'ov-backdrop', onKeydown: e => {
     if (e.key === 'Escape') { e.preventDefault(); closeOverview(); }
     if (e.key === 'Tab') {
@@ -344,31 +444,28 @@ export function renderOverview() {
     }
   } },
     el('section', { class: 'ov-modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'ov-title' },
-      el('header', { class: 'ov-header' }, el('div', {}, el('h1', { id: 'ov-title' }, '▦ Overview'), el('p', {}, 'Your calendar, one day at a time')), act('Close ✕', closeOverview)),
+      el('header', { class: 'ov-header' },
+        el('div', { class: 'ov-title-block' }, el('h1', { id: 'ov-title' }, '🗓️ Overview'), el('p', {}, 'Your calendar, one day at a time'), el('span', { class: 'ov-pending', hidden: !session.drafts.size }, `${session.drafts.size} day(s) with pending edits`)),
+        el('div', { class: 'ov-header-actions', role: 'toolbar', 'aria-label': 'Overview actions' }, ...headerUtilities(), ...pending, ...(canPeek ? [peekButton()] : []), ...workflow, act('Close ✕', closeOverview))
+      ),
       session.busy ? el('div', { class: 'ov-working', role: 'status' }, 'Saving / loading… Please wait.') : '',
       session.error ? el('div', { class: 'ov-error', role: 'alert' }, session.error) : '',
       session.message ? el('div', { class: 'ov-success', role: 'status' }, session.message) : '',
-      session.screen === 'table' ? tableView() : session.screen === 'editor' ? editorView() : session.screen === 'preview' ? previewView() : session.screen === 'import' ? importView() : historyView(),
-      el('footer', { class: 'ov-footer' },
-        el('span', { class: 'ov-pending' }, `${session.drafts.size} day(s) with pending edits`),
-        (() => { const b = act('Review pending edits', saveInline, 'ov-primary'); b.dataset.pendingButton = 'save'; b.disabled = !session.drafts.size; return b; })(),
-        (() => { const b = act('Discard pending edits', () => { if (confirm('Discard pending table edits?')) { session.drafts.clear(); draw(); } }); b.dataset.pendingButton = 'discard'; b.disabled = !session.drafts.size; return b; })(),
-        act('Refresh', async () => { if (dirty()) throw new Error('Save or discard unsaved changes before refreshing.'); session.busy = true; draw(); try { await refreshOverview(); session.message = 'Calendar refreshed.'; } finally { session.busy = false; draw(); } }),
-        act('History', () => { if (session.editor || session.importing) throw new Error('Finish or cancel the current editor/import first.'); session.screen = 'history'; draw(); }),
-        act('Undo last action', async () => {
-          if (dirty()) throw new Error('Save or discard unsaved changes before Undo.');
-          const op = lastUndoable(); if (!op) throw new Error('There is no action to undo in this browser.');
-          if (!confirm(`Undo “${op.label}” for ${op.days.length} day(s)?`)) return;
-          session.busy = true; draw(); try { await undoLastOperation(); session.message = 'Last action undone.'; } finally { session.busy = false; draw(); }
-        })
-      )
+      content,
+      peekSurface
     )
   );
   root.querySelectorAll('button').forEach(b => { if (session.busy) b.disabled = true; });
+  const actions = root.querySelector('.ov-header-actions');
+  actions.style.setProperty('--ov-action-count', [...actions.children].filter(node => !node.dataset.pendingButton || !node.disabled).length);
   return root;
 }
 window.addEventListener('beforeunload', event => { if (state.modal === 'overview' && dirty()) { event.preventDefault(); event.returnValue = ''; } });
 window.addEventListener('viaticum:leave-overview', event => { if (!mayLeaveOverview()) event.preventDefault(); });
+window.addEventListener('pointerup', () => setPeek(false));
+window.addEventListener('pointercancel', () => setPeek(false));
+window.addEventListener('blur', () => setPeek(false));
+document.addEventListener('visibilitychange', () => { if (document.hidden) setPeek(false); });
 window.addEventListener('keydown', event => {
   if (state.modal !== 'overview' || event.key !== 'Tab') return;
   if (!document.querySelector('.ov-modal')?.contains(document.activeElement)) document.querySelector('.ov-header button')?.focus();

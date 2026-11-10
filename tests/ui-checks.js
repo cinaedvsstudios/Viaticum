@@ -3,7 +3,7 @@ import { openOverview } from '../js/screens/overviewScreen.js';
 const results=[];
 const assert=(ok,message)=>{if(!ok)throw new Error(message);results.push(message);};
 const settle=()=>new Promise(r=>setTimeout(r,80));
-const click=async name=>{const b=[...document.querySelectorAll('.ov-modal button')].find(b=>b.textContent.trim()===name);if(!b)throw new Error('Missing button: '+name);b.click();await settle();};
+const click=async name=>{const b=[...document.querySelectorAll('.ov-modal button')].find(b=>b.getAttribute('aria-label')===name||b.textContent.trim()===name);if(!b)throw new Error('Missing button: '+name);b.click();await settle();};
 const fill=async(label,value)=>{const input=document.querySelector(`[aria-label="${label}"]`);if(!input)throw new Error('Missing field: '+label);input.value=value;input.dispatchEvent(new Event(['date','month'].includes(input.type)?'change':'input',{bubbles:true}));await settle();};
 const choose=async(label,value)=>{const input=document.querySelector(`[aria-label="${label}"]`);input.value=value;input.dispatchEvent(new Event('change',{bubbles:true}));await settle();};
 try {
