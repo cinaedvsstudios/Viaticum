@@ -1,5 +1,13 @@
 # Viaticum Web
 
+## Web v3.0.2 — themed dialogs and date pickers
+
+Copy and Move in Edit Day now open a Viaticum calendar instead of a browser prompt. Dates without writable Google Sheet rows and the source date are disabled; destinations containing data are marked and require a separate overwrite confirmation. Existing unsaved Edit Day fields remain intact while the dialog is open. The Day date control and Overview date/month controls use the same themed picker system.
+
+Clear, Trip creation/removal, and Overview save/delete/discard/import/undo confirmations now use app-owned dialogs rather than JavaScript alert/prompt/confirm. Dialogs support keyboard cancellation and focus restoration. Browser-controlled file selection, OAuth permission windows, and the browser's mandatory before-unload warning are intentionally unchanged.
+
+Open `tests/qa.html?dialogs=1` for isolated dialog checks and `tests/qa.html?auto=1` for the existing Overview interaction checks. The native Android project was not changed.
+
 ## Web v3.0 — day Overview and imports
 
 The bottom navigation now includes Overview. Open a day, edit selected fields, add further dates, and review Append/Replace/Clear changes before saving once. Desktop provides an editable daily table; mobile provides expandable day cards. Backroom imports add only selected dates, local times, party names and locations, with Maybe status and source-ID duplicate protection. Confirmed AI booking imports use the versioned JSON format, including two endpoint entries for hotels.
