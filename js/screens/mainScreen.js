@@ -16,6 +16,7 @@ import { syncAll, clearDay } from '../services/syncService.js';
 import { shareText } from '../utils/share.js';
 import { shareDayText } from '../features/dayFeature.js';
 import { attachHorizontalSwipe } from '../features/navigationFeature.js';
+import { confirmAction, showNotice } from '../components/appDialogs.js';
 
 export function renderMainScreen() {
   const selected = entryByDate(state.selectedDate) || {
@@ -170,7 +171,7 @@ function dayPanel(entry) {
       ),
       el('div', { class: 'toolbar-right' },
         iconButton(state.refData, 'Icon_Share_Day', 'Share', () => shareText('Viaticum day', shareDayText(entry))),
-        iconButton(state.refData, 'Icon_Clear_Day', 'Clear', () => hasContent && confirm('Clear this day?') && clearDay(entry)),
+        iconButton(state.refData, 'Icon_Clear_Day', 'Clear', async () => { if (hasContent && await confirmAction({ title: 'Clear this day?', message: 'Clear this day’s Location, Event, Status, Schedule, Details and Links? The date and Trip ID are preserved.', confirmLabel: 'Clear day', danger: true })) { try { await clearDay(entry); } catch (error) { await showNotice({ title: 'Clear failed', message: error.message || String(error) }); } } }),
         iconButton(state.refData, 'Icon_Edit_Day', 'Edit', () => pushRoute('edit')),
         iconButton(state.refData, 'Icon_ExpandAll', 'Open', () => pushRoute('day'))
       )
