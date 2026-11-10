@@ -13,7 +13,7 @@ async function headers() {
 
 const base = range => `https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}/values/${encodeURIComponent(range)}`;
 
-async function authedFetch(url, options = {}, retry = true) {
+export async function authedFetch(url, options = {}, retry = true) {
   const res = await fetch(url, {
     ...options,
     headers: {
@@ -37,6 +37,20 @@ async function authedFetch(url, options = {}, retry = true) {
   }
 
   return res;
+}
+
+export async function spreadsheetBatch(requests) {
+  const res = await authedFetch(`https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}:batchUpdate`, {
+    method: 'POST', body: JSON.stringify({ requests })
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function spreadsheetProperties() {
+  const res = await authedFetch(`https://sheets.googleapis.com/v4/spreadsheets/${config.spreadsheetId}?fields=sheets.properties`);
+  if (!res.ok) throw new Error(await res.text());
+  return (await res.json()).sheets.map(sheet => sheet.properties);
 }
 
 export async function fetchRange(range) {

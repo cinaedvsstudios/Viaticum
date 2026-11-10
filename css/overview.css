@@ -1,0 +1,140 @@
+/* Overview is deliberately scoped: existing dashboard and Edit Day layouts stay intact. */
+.ov-backdrop { position:fixed; inset:0; z-index:500; display:flex; align-items:center; justify-content:center; padding:18px; background:rgba(0,0,0,.5); }
+.ov-modal { width:min(1600px,98vw); height:94dvh; display:flex; flex-direction:column; background:var(--app-bg); color:var(--text-main); border:2px solid var(--accent); border-radius:18px; overflow:hidden; box-shadow:0 14px 60px #0005; }
+.ov-modal h1,.ov-modal h2,.ov-modal h3,.ov-modal p { margin:0; }
+.ov-modal h1 { font-size:1.45rem; }
+.ov-modal h2 { font-size:1.25rem; }
+.ov-modal h3 { font-size:1rem; }
+.ov-modal input,.ov-modal select,.ov-modal textarea { background:var(--app-bg); color:var(--text-main); border:1px solid var(--soft-border); border-radius:7px; padding:8px; min-height:40px; max-width:100%; }
+.ov-modal input[type=checkbox] { min-height:24px; min-width:24px; width:24px; height:24px; accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
+.ov-modal textarea { width:100%; resize:vertical; line-height:1.45; }
+.ov-modal button:focus-visible,.ov-modal input:focus-visible,.ov-modal select:focus-visible,.ov-modal textarea:focus-visible,.ov-modal summary:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+.ov-button { min-height:40px; padding:8px 12px; border:1px solid var(--soft-border); border-radius:8px; background:var(--app-bg); font-size:.9rem; font-weight:600; white-space:normal; }
+.ov-button:hover { border-color:var(--accent); }
+.ov-button:disabled { opacity:.45; cursor:default; }
+.ov-primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.ov-header { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; gap:12px; border-bottom:1px solid var(--soft-border); background:var(--header-month-bg,var(--app-bg)); flex-shrink:0; }
+.ov-header p { font-size:.85rem; opacity:.7; margin-top:3px; }
+.ov-table-view { display:flex; flex-direction:column; overflow:hidden; flex:1; min-height:0; }
+.ov-tools { padding:12px 16px; border-bottom:1px solid var(--soft-border); flex-shrink:0; }
+.ov-search-line { display:flex; gap:8px; flex-wrap:wrap; }
+.ov-search { flex:1; min-width:220px; }
+.ov-filter-row { display:flex; align-items:end; gap:10px; flex-wrap:wrap; margin-top:10px; }
+.ov-range-controls { display:contents; }
+.ov-mobile-ranges { display:none; }
+.ov-control { display:flex; flex-direction:column; gap:5px; min-width:120px; font-size:.85rem; }
+.ov-control > span { font-weight:600; }
+.ov-more-filters { margin-top:10px; }
+.ov-more-filters summary { cursor:pointer; font-size:.85rem; padding:5px 0; }
+.ov-column-picks { display:flex; flex-wrap:wrap; gap:14px; padding-top:12px; }
+.ov-column-picks label,.ov-selection-bar label,.ov-edit-field header label,.ov-date-picks label,.ov-warning label { display:flex; align-items:center; gap:8px; }
+.ov-selection-bar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:8px 16px; border-bottom:1px solid var(--soft-border); font-size:.85rem; }
+.ov-grid-scroll { overflow:auto; flex:1; min-height:0; overscroll-behavior:contain; }
+.ov-table { width:100%; border-collapse:separate; border-spacing:0; min-width:1050px; font-size:.85rem; }
+.ov-table th,.ov-table td { padding:8px; text-align:left; vertical-align:top; border-bottom:1px solid var(--soft-border); border-right:1px solid var(--soft-border); }
+.ov-table thead th { position:sticky; top:0; z-index:2; background:var(--app-bg); box-shadow:0 1px var(--soft-border); }
+.ov-table thead .ov-button { border:0; padding:5px; min-height:30px; }
+.ov-table tbody th { min-width:130px; }
+.ov-table tbody th small { display:block; font-weight:400; opacity:.65; margin-top:5px; }
+.ov-table td { min-width:135px; }
+.ov-table td:first-child { min-width:48px; }
+.ov-table .ov-row-actions { min-width:110px; }
+.ov-row-actions .ov-button { width:100%; margin-bottom:5px; }
+.ov-cell-wrap textarea { min-height:62px; min-width:130px; border-color:transparent; background:transparent; font-size:.85rem; }
+.ov-cell-wrap:focus-within textarea { border-color:var(--accent); }
+.ov-cell-wrap .chip-row { margin-bottom:4px; }
+.ov-cell-wrap a { display:block; color:var(--accent); font-size:.8rem; padding:4px; }
+.ov-modified { background:rgba(255,193,7,.2); box-shadow:inset 3px 0 #e9aa00; border-radius:4px; }
+.ov-selected { background:color-mix(in srgb,var(--accent) 9%,var(--app-bg)); }
+.ov-muted { font-size:.85rem; opacity:.7; }
+.ov-footer { display:flex; align-items:center; flex-wrap:wrap; gap:7px; padding:10px 16px; border-top:1px solid var(--soft-border); flex-shrink:0; }
+.ov-footer .ov-pending { font-size:.8rem; margin-right:auto; }
+.ov-footer .ov-button { font-size:.8rem; min-height:36px; }
+.ov-footer button[data-pending-button]:disabled { display:none; }
+.ov-error,.ov-success,.ov-working,.ov-warning { padding:10px 16px; font-size:.9rem; flex-shrink:0; }
+.ov-error { background:#ffdddd; color:#721414; border-left:5px solid #b82020; }
+.ov-success { background:#dff5e8; color:#154f31; }
+.ov-working { background:#fff1c2; color:#604700; }
+.ov-warning { background:#fff1d2; color:#664800; border-left:4px solid #d19a00; margin:10px 0; }
+.ov-warning li { padding:4px 0; }
+.ov-empty { padding:40px; text-align:center; }
+.ov-editor,.ov-review,.ov-import,.ov-history { flex:1; overflow:auto; min-height:0; padding:18px 22px; overscroll-behavior:contain; }
+.ov-subheading { display:flex; align-items:start; justify-content:space-between; gap:14px; margin-bottom:18px; }
+.ov-subheading p { margin-top:7px; max-width:850px; }
+.ov-editor-fields { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.ov-edit-field { padding:12px; border:1px solid var(--soft-border); border-radius:12px; }
+.ov-edit-field header { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:9px; }
+.ov-field-enabled { border-color:var(--accent); box-shadow:inset 3px 0 var(--accent); }
+.ov-chip-picks { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+.ov-chip-picks .ov-button { min-height:34px; padding:5px 9px; }
+.ov-targets { padding:18px 0; margin-top:14px; border-top:1px solid var(--soft-border); }
+.ov-targets p { margin-top:5px; }
+.ov-date-picks { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:10px; margin-top:14px; max-height:260px; overflow:auto; padding:4px; }
+.ov-date-picks label { font-size:.9rem; padding:6px; border:1px solid var(--soft-border); border-radius:7px; }
+.ov-editor-footer { position:sticky; bottom:-18px; display:flex; flex-wrap:wrap; gap:9px; background:var(--app-bg); border-top:1px solid var(--soft-border); padding:12px 0; margin-top:14px; z-index:3; }
+.ov-review-days { display:flex; flex-direction:column; gap:16px; margin-top:16px; }
+.ov-review-day { padding:12px; border:1px solid var(--soft-border); border-radius:12px; }
+.ov-review-day h3 { margin-bottom:12px; }
+.ov-compare-field { margin-top:12px; }
+.ov-comparison { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; }
+.ov-before,.ov-after { padding:10px; border-radius:8px; min-width:0; }
+.ov-before { background:#e4efff; color:#173b6b; border-left:4px solid #4180d7; }
+.ov-after { background:#e2f5e8; color:#154b2a; border-left:4px solid #3a9c59; }
+.ov-before small,.ov-after small { font-weight:750; font-size:.7rem; }
+.ov-comparison pre { font:inherit; white-space:pre-wrap; overflow-wrap:anywhere; margin:6px 0 0; line-height:1.5; }
+.ov-after textarea { margin-top:6px; background:#fff; color:#154b2a; }
+.ov-merge-actions { display:flex; flex-wrap:wrap; gap:8px; padding-top:6px; }
+.ov-upload { border:2px dashed var(--soft-border); padding:28px; border-radius:12px; margin:16px 0; }
+.ov-upload .ov-control { max-width:600px; }
+.ov-upload p { margin-top:14px; }
+.ov-upload .ov-button { margin-top:12px; }
+.ov-upload a.ov-button { display:inline-block; text-decoration:none; color:inherit; margin-left:8px; }
+.ov-import-counts { padding:12px 0; font-weight:650; }
+.ov-import-records { display:flex; flex-direction:column; gap:9px; margin:10px 0 20px; }
+.ov-import-record { display:flex; justify-content:space-between; align-items:start; gap:12px; border:1px solid var(--soft-border); padding:12px; border-radius:10px; border-left:4px solid #3a9c59; }
+.ov-import-record p { margin-top:5px; }
+.ov-import-record ul { margin:8px 0 0; font-size:.85rem; }
+.ov-kind-review { border-left-color:#d19a00; }
+.ov-kind-duplicate { border-left-color:#939393; opacity:.7; }
+.ov-import-choice { display:flex; flex-direction:column; gap:8px; min-width:210px; }
+.ov-history article { border-bottom:1px solid var(--soft-border); padding:14px 0; }
+.ov-history article p { margin-top:6px; font-size:.85rem; }
+.ov-mobile-list { display:none; }
+body.ov-open { overflow:hidden; }
+body.ov-open > #app > .screen { pointer-events:none; }
+@media(max-width:760px) {
+  .ov-backdrop { padding:0; }
+  .ov-modal { width:100%; height:100dvh; border:0; border-radius:0; }
+  .ov-header { padding:12px; }
+  .ov-header h1 { font-size:1.2rem; }
+  .ov-tools { padding:10px; max-height:43dvh; overflow:auto; }
+  .ov-search-line .ov-search { flex-basis:100%; }
+  .ov-search-line .ov-button { flex:1; font-size:.8rem; }
+  .ov-filter-row { gap:8px; }
+  .ov-range-controls { display:none; }
+  .ov-mobile-ranges { display:flex; }
+  .ov-control { min-width:110px; flex:1; }
+  .ov-selection-bar { padding:8px 10px; gap:8px; }
+  .ov-selection-bar .ov-muted { display:none; }
+  .ov-grid-scroll { display:none; }
+  .ov-mobile-list { display:block; overflow:auto; flex:1; min-height:0; padding:10px; }
+  .ov-mobile-day { border:1px solid var(--soft-border); border-radius:12px; padding:12px; margin-bottom:10px; }
+  .ov-mobile-day header { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .ov-mobile-day > p { margin:9px 0; font-size:.9rem; }
+  .ov-actions { display:flex; gap:8px; }
+  .ov-mobile-day details { margin-top:10px; }
+  .ov-mobile-day summary { cursor:pointer; padding:5px 0; }
+  .ov-mobile-day .ov-control { margin-top:10px; }
+  .ov-footer { padding:8px 10px max(8px,env(safe-area-inset-bottom)); gap:5px; }
+  .ov-footer .ov-pending { flex-basis:100%; }
+  .ov-footer .ov-button { padding:7px; font-size:.73rem; }
+  .ov-editor,.ov-review,.ov-import,.ov-history { padding:14px 12px; }
+  .ov-editor-fields { grid-template-columns:1fr; gap:12px; }
+  .ov-subheading { flex-direction:column; }
+  .ov-comparison { grid-template-columns:1fr; }
+  .ov-date-picks { grid-template-columns:1fr; max-height:230px; }
+  .ov-import-record { flex-direction:column; }
+  .ov-import-choice { width:100%; }
+  .ov-upload { padding:16px; }
+  .ov-editor-footer { bottom:-14px; }
+}

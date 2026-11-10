@@ -7,6 +7,7 @@ import { renderEditScreen } from '../screens/editScreen.js';
 import { renderTripScreen } from '../screens/tripScreen.js';
 import { renderMoreSheet } from '../screens/moreSheet.js';
 import { statusToast } from '../components/statusToast.js';
+import { renderOverview } from '../screens/overviewScreen.js';
 import { initHistory } from './history.js';
 
 let root;
@@ -22,6 +23,7 @@ export function render() {
   if (!root) return;
 
   applyTheme(state.refData, state.isDarkMode);
+  document.body.classList.toggle('ov-open', state.modal === 'overview');
   clear(root);
 
   const screen = state.route === 'day'
@@ -33,9 +35,11 @@ export function render() {
         : renderMainScreen();
 
   root.append(screen);
+  screen.inert = state.modal === 'overview';
 
   if (state.modal === 'more') root.append(renderMoreSheet());
+  if (state.modal === 'overview') root.append(renderOverview());
 
   const toast = statusToast(state);
-  if (toast) root.append(toast);
+  if (toast && state.modal !== 'overview') root.append(toast);
 }

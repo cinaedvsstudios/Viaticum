@@ -34,7 +34,7 @@ export function rangeFor(rowIndex, columns) {
     throw new Error(`Invalid row index for range: ${rowIndex}`);
   }
 
-  return `${SHEET_NAME}!${columns}${row}`;
+  return `${SHEET_NAME}!${columns.split(':').map(column => `${column}${row}`).join(':')}`;
 }
 
 export function dayDataRange(rowIndex) {

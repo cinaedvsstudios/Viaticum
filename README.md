@@ -1,5 +1,13 @@
 # Viaticum Web
 
+## Web v3.0 — day Overview and imports
+
+The bottom navigation now includes Overview. Open a day, edit selected fields, add further dates, and review Append/Replace/Clear changes before saving once. Desktop provides an editable daily table; mobile provides expandable day cards. Backroom imports add only selected dates, local times, party names and locations, with Maybe status and source-ID duplicate protection. Confirmed AI booking imports use the versioned JSON format, including two endpoint entries for hotels.
+
+See [Overview guide](docs/OVERVIEW.md) and [ChatGPT booking extraction instructions](docs/AI_IMPORT.md). Undo and operation history stay in the current browser. Sync Now remains in Settings. This update applies only to the web app; the native Android project is untouched.
+
+No dependency installation or build step is needed. Run `node --test tests/*.test.mjs` for the simulated spreadsheet checks. `node tests/serve.mjs` serves a local preview on port 8086; `tests/qa.html?auto=1` runs the isolated browser checks without accessing a live spreadsheet.
+
 A mobile-first static web clone of the existing Kotlin / Jetpack Compose Viaticum Android app. The web app is intentionally plain HTML, CSS, and vanilla JavaScript modules so it can be edited manually and deployed as static files.
 
 ## What is included

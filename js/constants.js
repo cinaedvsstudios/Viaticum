@@ -3,6 +3,7 @@ export const FALLBACK_ICONS = {
   Btn_Nav_Trip: '🧳',
   Btn_Nav_Sheet: '🔗',
   Btn_Nav_Sync: '🔄',
+  Btn_Nav_Overview: '▦',
   Btn_Nav_More: '⚙️',
   Btn_Nav_Settings: '⚙️',
   Btn_Preview_Edit: '👁️',

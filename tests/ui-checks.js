@@ -1,0 +1,68 @@
+import { state } from '../js/state.js';
+import { openOverview } from '../js/screens/overviewScreen.js';
+const results=[];
+const assert=(ok,message)=>{if(!ok)throw new Error(message);results.push(message);};
+const settle=()=>new Promise(r=>setTimeout(r,80));
+const click=async name=>{const b=[...document.querySelectorAll('.ov-modal button')].find(b=>b.textContent.trim()===name);if(!b)throw new Error('Missing button: '+name);b.click();await settle();};
+const fill=async(label,value)=>{const input=document.querySelector(`[aria-label="${label}"]`);if(!input)throw new Error('Missing field: '+label);input.value=value;input.dispatchEvent(new Event(['date','month'].includes(input.type)?'change':'input',{bubbles:true}));await settle();};
+const choose=async(label,value)=>{const input=document.querySelector(`[aria-label="${label}"]`);input.value=value;input.dispatchEvent(new Event('change',{bubbles:true}));await settle();};
+try {
+  openOverview();await settle();
+  assert(document.querySelectorAll('.ov-table tbody tr').length===10,'Overview shows ten populated November days, including all statuses');
+  const row=[...document.querySelectorAll('.ov-table tbody tr')].find(r=>r.textContent.includes('2026-11-04'));
+  row.querySelector('.ov-row-actions button').click();await settle();
+  await fill('Edit Status','Not going');await choose('Status operation','replace');
+  await fill('apply-from','2026-11-04');await fill('apply-to','2026-11-08');await click('Add date range');
+  await click('Review changes');
+  assert(document.querySelectorAll('.ov-review-day').length===5,'Pride review includes 4–8 November only');
+  await click('Confirm and save');
+  assert(state.entries.filter(e=>e.date>='2026-11-04'&&e.date<='2026-11-08').every(e=>e.status==='Not going'),'One confirmed save updates all five Pride dates');
+  assert(state.entries.find(e=>e.date==='2026-11-26').event==='Leave','Pride update preserves unrelated Cologne dates');
+  const cologne=[...document.querySelectorAll('.ov-table tbody tr')].find(r=>r.textContent.includes('2026-11-26'));
+  cologne.querySelector('.ov-row-actions button').click();await settle();
+  await fill('Edit Details','Info: New hotel');
+  await fill('apply-from','2026-11-26');await fill('apply-to','2026-11-29');await click('Add date range');await click('Review changes');
+  assert(document.querySelectorAll('.ov-review-day').length===4,'Hotel review includes all four Cologne dates');
+  await click('Confirm and save');
+  const days=state.entries.filter(e=>e.date>='2026-11-26'&&e.date<='2026-11-29');
+  assert(days.every(e=>e.details.includes('Old hotel')&&e.details.includes('New hotel')),'Append preserves original Details and adds the hotel on four dates');
+  assert(days.map(e=>e.event).join('|')==='Leave|Red|Sexy|Home','Hotel update preserves each day’s different Event');
+  const before=state.entries.find(e=>e.date==='2026-11-26').schedule;
+  const cell=document.querySelector('[aria-label="Location 2026-11-26"]');cell.value='Cologne';cell.dispatchEvent(new Event('input',{bubbles:true}));cell.dispatchEvent(new Event('change',{bubbles:true}));await settle();await click('Review pending edits');await click('Confirm and save');
+  assert(state.entries.find(e=>e.date==='2026-11-26').location==='Cologne','Inline edit survives redraw and saves');
+  assert(state.entries.find(e=>e.date==='2026-11-26').schedule===before,'Inline edit changes only its field');
+  const upload=async records=>{
+    const data=new DataTransfer();data.items.add(new File([JSON.stringify(records)],'sample.json',{type:'application/json'}));
+    const field=document.querySelector('input[type=file]');field.files=data.files;field.dispatchEvent(new Event('change',{bubbles:true}));
+    for(let i=0;i<40&&!document.querySelector('.ov-import-records');i++)await settle();
+  };
+  const backroom=[{Event_ID:'QA-1',Event_Date:'2026-11-27',Event_Name:'Later party',Venue_Name:'Example club',City:'Cologne',Event_Start_Time:'22:00',Event_End_Time:'06:00',Event_Description:'Do not import this description'},
+    {Event_ID:'QA-2',Event_Date:'2026-11-27',Event_Name:'Earlier party',Venue_Name:'Other club',City:'Cologne',Event_Start_Time:'19:00',Event_End_Time:'00:00'}];
+  await click('Import Backroom Events');await upload(backroom);await click('Preview day changes');
+  assert(document.querySelectorAll('.ov-comparison').length>0,'Import preview displays current and proposed fields');
+  const eventField=[...document.querySelectorAll('.ov-compare-field')].find(n=>n.querySelector('strong').textContent==='Event');
+  eventField.querySelectorAll('button')[1].click();await settle();
+  assert(document.querySelector('[aria-label="Import result 2026-11-27 event"]').value==='Red','Keep current is reversible and keeps the field in the review');
+  const stillEvent=[...document.querySelectorAll('.ov-compare-field')].find(n=>n.querySelector('strong').textContent==='Event');stillEvent.querySelector('button').click();await settle();
+  assert(document.querySelector('[aria-label="Import result 2026-11-27 event"]').value.includes('Later party'),'Merge both restores the proposed combined information');
+  await click('Confirm import and save');
+  const imported=state.entries.find(e=>e.date==='2026-11-27');
+  assert(imported.schedule.split('\n').length===3,'Two imported parties get separate lines alongside the existing schedule');
+  assert(imported.status==='Booked|Maybe','Import retains both Booked and Maybe on the day');
+  assert(imported.location==='Köln','Import uses the existing Cologne location name');
+  assert(!imported.details.includes('Do not import'),'Backroom descriptions stay out of calendar Details');
+  await click('Import Backroom Events');await upload(backroom);
+  assert(document.querySelector('.ov-import-counts').textContent.includes('2 already imported'),'Reimport identifies both existing source IDs');
+  const originalConfirm=window.confirm;window.confirm=()=>true;
+  await click('Cancel import');await click('Undo last action');window.confirm=originalConfirm;
+  assert(state.importedRecords.length===0,'Browser-local Undo removes the last import’s identities');
+  assert(state.entries.find(e=>e.date==='2026-11-27').event==='Red','Undo import restores the original daily Event');
+  await click('AI-Augmented Import');
+  await upload({schemaVersion:'viaticum-import-v1',records:[{id:'QA-HOTEL',type:'hotel',confirmed:true,name:'Example hotel',location:'Cologne',checkIn:{date:'2026-11-26',time:'15:00'},checkOut:{date:'2026-11-29',time:''},bookingReference:'QA123'}]});
+  await click('Preview day changes');await click('Confirm import and save');
+  assert(state.importedRecords.length===2,'Hotel import creates exactly two structured entries');
+  assert(state.entries.find(e=>e.date==='2026-11-26').schedule.includes('check-in')&&state.entries.find(e=>e.date==='2026-11-29').schedule.includes('check-out'),'Hotel endpoints appear in the normal daily schedules');
+  const report=document.createElement('aside');report.id='qa-results';report.style='position:fixed;bottom:0;right:0;z-index:9999;background:#dff5e8;color:#154f31;padding:12px;max-width:400px;font:14px system-ui';report.textContent=`PASS: ${results.length} browser checks`;document.body.append(report);
+} catch(error) {
+  const report=document.createElement('aside');report.id='qa-results';report.style='position:fixed;top:0;left:0;z-index:9999;background:#fdd;color:#700;padding:20px;white-space:pre-wrap';report.textContent=`FAIL: ${error.stack}\nPassed: ${results.join('; ')}`;document.body.append(report);
+}

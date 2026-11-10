@@ -17,6 +17,7 @@ export const state = {
   selectedDate: todayIso(),
   currentMonthOffset: 0,
   entries: [],
+  importedRecords: [],
   refData: refData(),
   isDarkMode: getBool(STORAGE_KEYS.darkMode, false),
   isSyncing: false,
