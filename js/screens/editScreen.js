@@ -5,6 +5,7 @@ import { editableStatuses, templatesFor, adjacentDates, hasData } from '../featu
 import { saveDay, clearDay, moveDay, copyDay, entryForDate } from '../services/syncService.js';
 import { pushRoute, goMain } from '../router/history.js';
 import { iconFor } from '../components/iconButton.js';
+import { pickDate, confirmAction, showNotice } from '../components/appDialogs.js';
 
 export function renderEditScreen() {
   const original = entryForDate(state.selectedDate);
@@ -35,24 +36,19 @@ function formView(form) {
   const fields = {};
 
   const actions = el('footer', { class: 'edit-actions' },
-    button(`${iconFor(refs, 'Btn_Preview_Edit')} Preview`, () => alert('Preview after saving opens the day screen.'), 'btn'),
+    button(`${iconFor(refs, 'Btn_Preview_Edit')} Preview`, () => showNotice({ title: 'Preview', message: 'Save the day to open its updated preview.' }), 'btn'),
     button(`${iconFor(refs, 'Btn_Save_Edit')} Save`, async () => {
       await saveDay(readForm(form, fields));
       goMain();
     }, 'btn save'),
-    button(`${iconFor(refs, 'Btn_Copy_Edit')} Copy`, async () => {
-      const target = prompt('Copy to date (YYYY-MM-DD)', form.date);
-      if (target) await copyDay({ ...readForm(form, fields), date: target, rowIndex: entryForDate(target).rowIndex });
-    }, 'btn'),
-    button(`${iconFor(refs, 'Btn_Move_Edit')} Move`, async () => {
-      const target = prompt('Move to date (YYYY-MM-DD)', form.date);
-      if (!target) return;
-      const existing = entryForDate(target);
-      if (hasData(existing) && !confirm('Target day already has data. Overwrite?')) return;
-      await moveDay(form, { ...readForm(form, fields), date: target, rowIndex: existing.rowIndex });
-      goMain();
-    }, 'btn'),
-    button(`${iconFor(refs, 'Icon_Clear_Day')} Clear`, async () => confirm('Clear C:H only?') && clearDay(form), 'btn danger'),
+    button(`${iconFor(refs, 'Btn_Copy_Edit')} Copy`, () => copyOrMoveDay('copy', form, fields), 'btn'),
+    button(`${iconFor(refs, 'Btn_Move_Edit')} Move`, () => copyOrMoveDay('move', form, fields), 'btn'),
+    button(`${iconFor(refs, 'Icon_Clear_Day')} Clear`, async () => {
+      if (await confirmAction({ title: 'Clear this day?', message: 'Clear Location, Event, Status, Schedule, Details and Links for ' + formatLong(form.date) + '? The date and Trip ID will remain.', confirmLabel: 'Clear day', danger: true })) {
+        try { await clearDay(form); }
+        catch (error) { await showNotice({ title: 'Clear failed', message: error.message || String(error) }); }
+      }
+    }, 'btn danger'),
     button(`${iconFor(refs, 'Btn_Cancel_Edit')} Cancel`, goMain, 'btn cancel')
   );
 
@@ -88,6 +84,44 @@ function formView(form) {
 
   root.append(actions, leftColumn, rightColumn);
   return root;
+}
+
+async function copyOrMoveDay(action, form, fields) {
+  const isMove = action === 'move';
+  const writable = state.entries.filter(entry => Number.isInteger(entry.rowIndex) && entry.rowIndex >= 2);
+  const target = await pickDate({
+    title: isMove ? 'Move to date' : 'Copy to date',
+    message: (isMove ? 'Move' : 'Copy') + ' ' + formatLong(form.date) + ' to another day. Dates with an orange dot already contain information.',
+    initialDate: form.date,
+    availableDates: writable.map(entry => entry.date),
+    occupiedDates: writable.filter(hasData).map(entry => entry.date),
+    excludeDate: form.date,
+    confirmLabel: isMove ? 'Move to selected date' : 'Copy to selected date'
+  });
+  if (!target) return;
+  const existing = writable.find(entry => entry.date === target);
+  if (!existing) {
+    await showNotice({ title: 'Date unavailable', message: 'This date has no writable row in the Google Sheet. Sync and try again.' });
+    return;
+  }
+  if (hasData(existing)) {
+    const approved = await confirmAction({
+      title: 'Replace existing day?',
+      message: formatLong(target) + ' already contains calendar information. ' +
+        'Continuing will replace its Location, Event, Status, Schedule, Details, Links and Trip ID with the ' +
+        (isMove ? 'moved' : 'copied') + ' day. The original day will ' + (isMove ? 'be cleared.' : 'remain unchanged.'),
+      confirmLabel: isMove ? 'Replace and move' : 'Replace and copy',
+      danger: true
+    });
+    if (!approved) return;
+  }
+  const next = { ...readForm(form, fields), date: target, rowIndex: existing.rowIndex };
+  try {
+    if (isMove) { await moveDay(form, next); goMain(); }
+    else await copyDay(next);
+  } catch (error) {
+    await showNotice({ title: isMove ? 'Move failed' : 'Copy failed', message: error.message || String(error) });
+  }
 }
 
 function editCard(title, ...children) {
