@@ -14,6 +14,7 @@ import { pushRoute, goMain } from '../router/history.js';
 import { sheetUrl } from '../config.js';
 import { syncAll } from '../services/syncService.js';
 import { shareText } from '../utils/share.js';
+import { promptText, pickDate, confirmAction, showNotice } from '../components/appDialogs.js';
 
 export function renderTripScreen() {
   const list = trips();
@@ -82,7 +83,7 @@ function controls(selected, days) {
   return el('section', { class: 'trip-actions' },
     iconButton(state.refData, 'Icon_Share_Day', 'Share', () => shareText('Viaticum trip', days.map(d => `${d.date} ${d.event}\n${d.schedule}`).join('\n\n'))),
     iconButton(state.refData, 'Icon_Edit_Trip_Days', 'Edit', () => setState({ tripEdit: !state.tripEdit })),
-    iconButton(state.refData, 'Icon_Delete_Trip', 'Delete', () => selected && confirm('Delete trip links?') && deleteTrip(selected)),
+    iconButton(state.refData, 'Icon_Delete_Trip', 'Delete', async () => { if (!selected) return; if (await confirmAction({ title: 'Remove trip?', message: 'Remove the Trip ID “' + selected + '” from its calendar days? The day details will remain.', confirmLabel: 'Remove trip', danger: true })) { try { await deleteTrip(selected); } catch (error) { await showNotice({ title: 'Trip update failed', message: error.message || String(error) }); } } }),
     iconButton(state.refData, 'Icon_ExpandAll', 'Expand', () => setState({ expandedDays: new Set(days.map(d => d.date)) })),
     iconButton(state.refData, 'Icon_UpArrow', 'Up', () => {}),
     iconButton(state.refData, 'Icon_DownArrow', 'Down', () => {})
@@ -130,15 +131,25 @@ function toggle(date) {
 }
 
 async function newTrip() {
-  const name = prompt('New Trip Name');
+  const name = await promptText({ title: 'New Trip', message: 'Enter the name for your new trip.', placeholder: 'Trip name', confirmLabel: 'Continue' });
   if (!name) return;
-  const date = prompt('Start date YYYY-MM-DD', state.selectedDate);
+  const writable = state.entries.filter(e => Number.isInteger(e.rowIndex) && e.rowIndex >= 2);
+  const date = await pickDate({
+    title: 'Start date for ' + name,
+    message: 'Choose a day that already exists in your Google Sheet.',
+    initialDate: state.selectedDate,
+    availableDates: writable.map(e => e.date),
+    occupiedDates: writable.filter(e => e.tripName).map(e => e.date),
+    confirmLabel: 'Use this date'
+  });
   if (!date) return;
-  const entry = state.entries.find(e => e.date === date);
+  const entry = writable.find(e => e.date === date);
   if (entry) {
-    await updateTripCell(entry, name);
-    setState({ selectedTripName: name });
+    if (entry.tripName && entry.tripName !== name &&
+        !(await confirmAction({ title: 'Change Trip ID?', message: 'This day currently belongs to “' + entry.tripName + '”. Assign it to “' + name + '” instead?', confirmLabel: 'Change Trip ID', danger: true }))) return;
+    try { await updateTripCell(entry, name); setState({ selectedTripName: name }); }
+    catch (error) { await showNotice({ title: 'Could not create trip', message: error.message || String(error) }); }
   } else {
-    alert('No sheet row found for that date yet.');
+    await showNotice({ title: 'Date unavailable', message: 'No writable sheet row was found for that date.' });
   }
 }
