@@ -8,6 +8,7 @@ import { parseBackroom, parseAI, prepareImport, buildImportPlan, AI_EXAMPLE } fr
 import { refreshOverview, commitCells, changesToCells, recordsToCells, undoLastOperation } from '../services/overviewService.js';
 import { operationHistory, lastUndoable } from '../services/recordStore.js';
 import { config } from '../config.js';
+import { confirmAction, promptText, pickDate, pickMonth } from '../components/appDialogs.js';
 
 let session;
 let returnFocus;
@@ -70,7 +71,20 @@ function act(label, callback, className = '') {
   return control;
 }
 function input(type, value, onInput, key, attrs = {}) {
-  return el('input', { type, value: value || '', dataset: { focus: key }, 'aria-label': attrs['aria-label'] || key, [type === 'date' || type === 'month' ? 'onChange' : 'onInput']: e => onInput(e.target.value), ...attrs });
+  const calendar = type === 'date' || type === 'month';
+  const props = { type, value: value || '', dataset: { focus: key }, 'aria-label': attrs['aria-label'] || key, [calendar ? 'onChange' : 'onInput']: e => onInput(e.target.value), ...attrs };
+  if (calendar) {
+    const choose = async () => {
+      const next = type === 'month'
+        ? await pickMonth({ title: 'Choose month', initialMonth: value })
+        : await pickDate({ title: 'Choose date', initialDate: validDate(value) ? value : berlinToday(), selectedDate: validDate(value) ? value : '', confirmLabel: 'Set date' });
+      if (next && next !== value) onInput(next);
+    };
+    props.readonly = true;
+    props.onClick = event => { event.preventDefault(); choose(); };
+    props.onKeydown = event => { if (['Enter', ' ', 'ArrowDown'].includes(event.key)) { event.preventDefault(); choose(); } };
+  }
+  return el('input', props);
 }
 function select(value, options, change, label) {
   return el('select', { 'aria-label': label, onChange: e => change(e.target.value) }, options.map(([v, name]) => el('option', { value: v, selected: String(v) === String(value) }, name)));
@@ -131,13 +145,22 @@ export function openOverview() {
 export function mayLeaveOverview() {
   if (state.modal !== 'overview') return true;
   if (session?.busy) return false;
-  if (dirty() && !confirm('Discard the unsaved Overview changes?')) return false;
+  // History's cancellable leave event is synchronous. Stop navigation first,
+  // then show an app-owned confirmation and close safely if approved.
+  if (dirty()) {
+    confirmAction({ title: 'Discard Overview changes?', message: 'You have unsaved changes in Overview. Close without saving?', confirmLabel: 'Discard changes', danger: true }).then(approved => {
+      if (approved && !session?.busy) {
+        session = null; setState({ modal: null }); returnFocus?.focus?.();
+      }
+    });
+    return false;
+  }
   session = null;
   return true;
 }
-function closeOverview() {
-  if (session.busy) return;
-  if (dirty() && !confirm('Discard the unsaved Overview changes?')) return;
+async function closeOverview() {
+  if (session?.busy) return;
+  if (dirty() && !(await confirmAction({ title: 'Discard Overview changes?', message: 'You have unsaved changes in Overview. Close without saving?', confirmLabel: 'Discard changes', danger: true }))) return;
   session = null; setState({ modal: null }); returnFocus?.focus?.();
 }
 function currentEntries() {
@@ -175,8 +198,8 @@ function beginEditor(entry = null, copy = false) {
     patches: Object.fromEntries(FIELDS.map(([key]) => [key, { enabled: false, value: copy || dates.length === 1 ? text(source[key]) : '', mode: 'append' }])) };
   session.screen = 'editor'; draw();
 }
-function backToTable() {
-  if (session.editor?.touched && !confirm('Discard the unsaved editor changes?')) return;
+async function backToTable() {
+  if (session.editor?.touched && !(await confirmAction({ title: 'Discard editor changes?', message: 'Your unsaved editor changes will be lost.', confirmLabel: 'Discard changes', danger: true }))) return;
   session.editor = null; session.screen = 'table'; draw();
 }
 function presets(value) {
@@ -216,12 +239,18 @@ function toolbar() {
       ),
       el('div', { class: 'ov-filter-row' },
         label('Saved view', select('', [['', 'Choose a saved view'], ...views().map((v, i) => [String(i), v.name])], value => { if (value !== '') { session.filters = { ...views()[Number(value)].filters }; draw(); } }, 'Saved view')),
-        act('Save current view', () => {
-          const name = prompt('Name this view'); if (!name?.trim()) return;
+        act('Save current view', async () => {
+          const name = await promptText({ title: 'Save Overview view', message: 'Give this set of filters a name.', placeholder: 'View name', confirmLabel: 'Save view' });
+          if (!name) return;
           try { localStorage.setItem(localKey, JSON.stringify([...views().filter(v => v.name !== name.trim()), { name: name.trim(), filters: { ...f } }].slice(-20))); session.message = 'View saved in this browser.'; draw(); }
           catch { throw new Error('This browser cannot save views.'); }
         }),
-        act('Delete saved view', () => { const name = prompt('Name of the saved view to delete'); if (name && confirm(`Delete saved view “${name}”?`)) { localStorage.setItem(localKey, JSON.stringify(views().filter(v => v.name !== name))); draw(); } })
+        act('Delete saved view', async () => {
+          const name = await promptText({ title: 'Delete saved view', message: 'Enter the name of the saved view to delete.', placeholder: 'View name', confirmLabel: 'Find view' });
+          if (name && await confirmAction({ title: 'Delete saved view?', message: 'Delete “' + name + '” from this browser?', confirmLabel: 'Delete view', danger: true })) {
+            localStorage.setItem(localKey, JSON.stringify(views().filter(v => v.name !== name))); draw();
+          }
+        })
       ),
       el('div', { class: 'ov-column-picks' }, [...FIELDS, ['time', 'Time'], ['source', 'Source']].map(([key, title]) => el('label', {}, check(session.columns.has(key), value => { value ? session.columns.add(key) : session.columns.delete(key); draw(); }, `Show ${title}`), `${FIELD_ICONS[key]} ${title}`)))
     )
@@ -361,7 +390,10 @@ function importReviewChanges() {
 }
 function importView() {
   const imp = session.importing;
-  const back = () => { if (!confirm('Close this import without saving?')) return; session.importing = null; session.screen = 'table'; draw(); };
+  const back = async () => {
+    if (!(await confirmAction({ title: 'Cancel import?', message: 'Close this import without saving any of its changes?', confirmLabel: 'Discard import', danger: true }))) return;
+    session.importing = null; session.screen = 'table'; draw();
+  };
   return el('section', { class: 'ov-import', dataset: { scroll: 'import' } },
     el('div', { class: 'ov-subheading' }, heading(imp.source === 'backroom' ? 'Import Backroom Events' : 'AI-Augmented Import', imp.source === 'backroom' ? 'Selected dates, times, locations and party names only. New events are Maybe. Recurrence is not expanded.' : 'Confirmed tickets and reservations only. New bookings are Booked. Original PDFs and images stay outside Viaticum.'), act('Cancel import', back)),
     imp.step === 'upload' ? el('div', { class: 'ov-upload' },
@@ -415,7 +447,7 @@ function headerUtilities() {
     act('Undo last action', async () => {
       if (dirty()) throw new Error('Save or discard unsaved changes before Undo.');
       const op = lastUndoable(); if (!op) throw new Error('There is no action to undo in this browser.');
-      if (!confirm(`Undo “${op.label}” for ${op.days.length} day(s)?`)) return;
+      if (!(await confirmAction({ title: 'Undo last action?', message: 'Undo “' + op.label + '” for ' + op.days.length + ' day(s)?', confirmLabel: 'Undo action', danger: true }))) return;
       session.busy = true; draw(); try { await undoLastOperation(); session.message = 'Last action undone.'; } finally { session.busy = false; draw(); }
     })
   ];
@@ -429,7 +461,7 @@ export function renderOverview() {
   const pending = [];
   if (session.screen === 'table') {
     const review = act('Review pending edits', saveInline, 'ov-primary'); review.dataset.pendingButton = 'save'; review.disabled = !session.drafts.size;
-    const discard = act('Discard pending edits', () => { if (confirm('Discard pending table edits?')) { session.drafts.clear(); draw(); } }); discard.dataset.pendingButton = 'discard'; discard.disabled = !session.drafts.size;
+    const discard = act('Discard pending edits', async () => { if (await confirmAction({ title: 'Discard pending edits?', message: 'Discard all unsaved changes to this Overview table?', confirmLabel: 'Discard edits', danger: true })) { session.drafts.clear(); draw(); } }); discard.dataset.pendingButton = 'discard'; discard.disabled = !session.drafts.size;
     pending.push(review, discard);
   }
   const canPeek = session.peekSnapshot && (session.screen === 'editor' || session.screen === 'preview' && session.editor);
