@@ -53,8 +53,14 @@ try {
   assert(!imported.details.includes('Do not import'),'Backroom descriptions stay out of calendar Details');
   await click('Import Backroom Events');await upload(backroom);
   assert(document.querySelector('.ov-import-counts').textContent.includes('2 already imported'),'Reimport identifies both existing source IDs');
-  const originalConfirm=window.confirm;window.confirm=()=>true;
-  await click('Cancel import');await click('Undo last action');window.confirm=originalConfirm;
+  await click('Cancel import');
+  const confirmImportCancel=document.querySelector('.vtm-dialog-panel .vtm-dialog-danger-button');
+  assert(Boolean(confirmImportCancel),'Cancel import uses a themed confirmation dialog');
+  confirmImportCancel.click();await settle();
+  await click('Undo last action');
+  const confirmUndo=document.querySelector('.vtm-dialog-panel .vtm-dialog-danger-button');
+  assert(Boolean(confirmUndo),'Undo uses a themed confirmation dialog');
+  confirmUndo.click();await settle();
   assert(state.importedRecords.length===0,'Browser-local Undo removes the last import’s identities');
   assert(state.entries.find(e=>e.date==='2026-11-27').event==='Red','Undo import restores the original daily Event');
   await click('AI-Augmented Import');
