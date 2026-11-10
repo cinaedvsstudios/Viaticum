@@ -43,7 +43,7 @@ function makeDialog(title, description, createContent, tone = 'info') {
     backdrop.append(panel);
     document.body.append(backdrop);
     document.body.style.overflow = 'hidden';
-    queueMicrotask(() => panel.querySelector('[data-vtm-initial-focus]')?.focus({ preventScroll: true }) || panel.querySelector('.vtm-dialog-actions button')?.focus({ preventScroll: true }));
+    queueMicrotask(() => { const target = panel.querySelector('[data-vtm-initial-focus]') || panel.querySelector('.vtm-dialog-actions button'); target?.focus({ preventScroll: true }); });
   });
 }
 
