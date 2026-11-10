@@ -15,6 +15,7 @@ import { syncAll, clearDay } from '../services/syncService.js';
 import { shareText } from '../utils/share.js';
 import { shareDayText } from '../features/dayFeature.js';
 import { attachHorizontalSwipe } from '../features/navigationFeature.js';
+import { pickDate, confirmAction, showNotice } from '../components/appDialogs.js';
 
 export function renderDayScreen() {
   const entry = entryByDate(state.selectedDate) || {
@@ -70,13 +71,15 @@ function header(entry) {
     el('div', { class: 'day-header-text' },
       el('label', { class: 'day-date-control' },
         el('span', { class: 'day-date-display' }, formatLong(entry.date)),
-        el('input', {
+        el('button', {
           class: 'day-date-native',
-          type: 'date',
-          value: entry.date,
-          onChange: e => setState({ selectedDate: e.target.value }),
-          ariaLabel: 'Change date'
-        })
+          type: 'button',
+          'aria-label': 'Change date',
+          onClick: async () => {
+            const date = await pickDate({ title: 'Go to date', message: 'Choose the day to view.', initialDate: entry.date, selectedDate: entry.date, confirmLabel: 'Open date' });
+            if (date && date !== entry.date) setState({ selectedDate: date });
+          }
+        }, '')
       ),
       entry.location ? el('h2', {}, `${state.refData.locations[entry.location] || '📍'} ${entry.location}`) : '',
       el('div', { class: 'day-event-status-line' },
@@ -98,7 +101,7 @@ function toolbar(entry) {
     ),
     el('div', { class: 'toolbar-right' },
       iconButton(state.refData, 'Icon_Share_Day', 'Share', () => shareText('Viaticum day', shareDayText(entry))),
-      iconButton(state.refData, 'Icon_Clear_Day', 'Clear', () => confirm('Clear this day?') && clearDay(entry)),
+      iconButton(state.refData, 'Icon_Clear_Day', 'Clear', async () => { if (await confirmAction({ title: 'Clear this day?', message: 'Clear this day’s Location, Event, Status, Schedule, Details and Links? The date and Trip ID are preserved.', confirmLabel: 'Clear day', danger: true })) { try { await clearDay(entry); } catch (error) { await showNotice({ title: 'Clear failed', message: error.message || String(error) }); } } }),
       iconButton(state.refData, 'Icon_Edit_Day', 'Edit', () => pushRoute('edit')),
       iconButton(state.refData, 'Icon_ExpandAll', 'Open', () => {})
     )
