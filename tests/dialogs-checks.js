@@ -50,7 +50,7 @@ try {
 
   const monthPromise = pickMonth({ initialMonth: '2026-11' });
   await nextPaint();
-  const december = [...document.querySelectorAll('.vtm-month-option')].find(button => button.textContent === 'Dec');
+  const december = [...document.querySelectorAll('.vtm-month-option')][11];
   december.click(); primary().click();
   assert(await monthPromise === '2026-12', 'Custom month picker returns YYYY-MM');
 
