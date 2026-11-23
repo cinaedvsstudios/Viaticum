@@ -66,17 +66,23 @@ function scanStore(technology, entries, capabilities, errors) {
       if (key != null) keys.push(key);
     }
     for (const key of keys) {
+      const rule = classify(key);
+      // Never read values for unrelated or unclassified keys: their names alone
+      // are enough to explain that they are excluded from application cleanup.
+      if (rule.owner !== 'Current application') {
+        entries.push(externalEntry(technology, key, 'Unregistered origin key; value not inspected and never deleted.'));
+        continue;
+      }
       try {
         const value = storage.getItem(key);
         if (value == null) continue;
-        const rule = classify(key);
         entries.push({
           id: entryId(technology, key), technology, key, value,
           bytes: approximateBytes(key) + approximateBytes(value),
           status: 'Local Only', ...rule
         });
       } catch (error) {
-        errors.push(technology + ': could not inspect one entry (' + String(error.message || error) + ')');
+        errors.push(technology + ': could not inspect one registered entry (' + String(error.message || error) + ')');
       }
     }
     capabilities[technology] = keys.length + ' keys inspected';
@@ -122,13 +128,7 @@ async function scanCaches(entries, capabilities) {
   try {
     const names = await caches.keys();
     for (const name of names.slice(0, 80)) {
-      let description = 'Origin-wide cache; no Viaticum-owned cache is configured';
-      try {
-        const cache = await caches.open(name);
-        const requests = await cache.keys();
-        description += ' (' + requests.length + ' request(s))';
-      } catch (_) {}
-      entries.push(externalEntry('Cache Storage', name, description + '. Protected.'));
+      entries.push(externalEntry('Cache Storage', name, 'Origin-wide cache; no Viaticum-owned cache is configured. Contents not inspected; protected.'));
     }
     capabilities['Cache Storage'] = names.length + ' cache(s) identified; unknown caches protected';
   } catch (error) {
