@@ -6,6 +6,7 @@ import { renderDayScreen } from '../screens/dayScreen.js';
 import { renderEditScreen } from '../screens/editScreen.js';
 import { renderTripScreen } from '../screens/tripScreen.js';
 import { renderMoreSheet } from '../screens/moreSheet.js';
+import { renderStorageManager } from '../screens/storageManager.js';
 import { statusToast } from '../components/statusToast.js';
 import { renderOverview } from '../screens/overviewScreen.js';
 import { initHistory } from './history.js';
@@ -38,6 +39,7 @@ export function render() {
   screen.inert = state.modal === 'overview';
 
   if (state.modal === 'more') root.append(renderMoreSheet());
+  if (state.modal === 'storageManager') root.append(renderStorageManager());
   if (state.modal === 'overview') root.append(renderOverview());
 
   const toast = statusToast(state);
