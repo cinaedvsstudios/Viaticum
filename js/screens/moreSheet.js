@@ -105,6 +105,11 @@ export function renderMoreSheet() {
           el('h3', {}, 'Appearance'),
           button(state.isDarkMode ? 'Switch to light mode' : 'Switch to dark mode', () => setState({ isDarkMode: !state.isDarkMode }), 'btn settings-action')
         ),
+        el('section', { class: 'settings-section' },
+          el('h3', {}, 'Storage'),
+          el('p', { class: 'muted' }, 'Inspect, back up and safely clean Viaticum data stored in this browser.'),
+          button('💾 Storage & Cleanup', () => setState({ modal: 'storageManager' }), 'btn settings-action')
+        ),
         debugPanel(),
         phase2DebugPanel(),
         lastOperationPanel(),

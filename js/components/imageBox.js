@@ -27,6 +27,14 @@ let failedImageUrls = new Set(readJson(MEMORY_FAILED_KEY, []));
 let emptyImageKeys = new Set(readJson(MEMORY_EMPTY_KEY, []));
 let resolvedImageUrlByKey = new Map(Object.entries(readJson(MEMORY_RESOLVED_KEY, {})));
 
+// Safe cache cleanup must also invalidate the in-memory image lookup collections.
+if (typeof window !== 'undefined') window.addEventListener('viaticum:storage-cleaned', event => {
+  const keys = new Set(event.detail?.keys || []);
+  if (keys.has(MEMORY_FAILED_KEY)) failedImageUrls = new Set(readJson(MEMORY_FAILED_KEY, []));
+  if (keys.has(MEMORY_EMPTY_KEY)) emptyImageKeys = new Set(readJson(MEMORY_EMPTY_KEY, []));
+  if (keys.has(MEMORY_RESOLVED_KEY)) resolvedImageUrlByKey = new Map(Object.entries(readJson(MEMORY_RESOLVED_KEY, {})));
+});
+
 function persistFailures() {
   writeJson(MEMORY_FAILED_KEY, [...failedImageUrls].slice(-800));
 }
