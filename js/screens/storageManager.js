@@ -56,7 +56,7 @@ export function renderStorageManager() {
   const ui = {
     scan: null, loading: true, busy: false, view: 'overview', message: '',
     error: '', selected: new Set(), backupCategories: new Set(STORAGE_CATEGORIES),
-    search: '', category: 'all', technology: 'all', owner: 'all',
+    search: '', category: 'all', technology: 'all', owner: 'all', status: 'all', protection: 'all',
     onlySafe: false, sortLargest: false, visibleCount: 70,
     detail: null, edit: false, importFile: null, importPreview: null
   };
@@ -142,7 +142,16 @@ export function renderStorageManager() {
     ];
     for (const [label, value] of metrics) stats.append(el('div', { class: C + 'stat' },
       el('strong', {}, String(value)), el('small', {}, label)));
-    body.append(heading('Application Storage Overview'), stats,
+    const safeBytes = safeItems().reduce((sum, e) => sum + (e.bytes || 0), 0);
+    const safePercent = scan.summary.applicationBytes
+      ? Math.min(100, 100 * safeBytes / scan.summary.applicationBytes)
+      : 0;
+    const bar = el('div', { class: C + 'bar', role: 'img', 'aria-label': 'Approximate app data: ' +
+      safePercent.toFixed(1) + '% safe-to-clean cache; remainder protected' },
+      el('span', { class: C + 'bar-safe', style: 'width:' + safePercent + '%' }));
+    body.append(heading('Application Storage Overview'), stats, bar,
+      paragraph('Safe-to-clean cache ' + readableSize(safeBytes) + ' · protected app data ' +
+        readableSize(scan.summary.applicationBytes - safeBytes), C + 'fine'),
       paragraph('Origin-wide usage: ' + readableSize(scan.origin?.usage) +
         (scan.origin?.quota != null ? ' / quota ' + readableSize(scan.origin.quota) : '') +
         '. The origin estimate includes other applications and browser storage; it is not Viaticum usage.', C + 'fine'));
@@ -214,7 +223,9 @@ export function renderStorageManager() {
     filterBar.append(search,
       selectField('Category', [['all', 'All categories'], ...STORAGE_CATEGORIES.map(x => [x, x])], ui.category, x => ui.category = x),
       selectField('Technology', [['all', 'All technologies'], ...new Set(ui.scan.entries.map(x => x.technology))].map(x => Array.isArray(x) ? x : [x, x]), ui.technology, x => ui.technology = x),
-      selectField('Ownership', [['all', 'All owners'], ['Current application', 'Viaticum'], ['Unknown', 'Unknown / other origin']], ui.owner, x => ui.owner = x)
+      selectField('Ownership', [['all', 'All owners'], ['Current application', 'Viaticum'], ['Unknown', 'Unknown / other origin']], ui.owner, x => ui.owner = x),
+      selectField('Sync status', [['all', 'All sync statuses'], ['Local Only', 'Local only'], ['Unknown / Review Required', 'Unknown / review']], ui.status, x => ui.status = x),
+      selectField('Protection', [['all', 'All protections'], ['protected', 'Protected'], ['removable', 'Removable']], ui.protection, x => ui.protection = x)
     );
     const safe = el('input', { type: 'checkbox' });
     safe.checked = ui.onlySafe;
@@ -232,6 +243,8 @@ export function renderStorageManager() {
       (ui.category === 'all' || e.category === ui.category) &&
       (ui.technology === 'all' || e.technology === ui.technology) &&
       (ui.owner === 'all' || e.owner === ui.owner) &&
+      (ui.status === 'all' || e.status === ui.status) &&
+      (ui.protection === 'all' || (ui.protection === 'protected' ? e.protected : !e.protected)) &&
       (!ui.onlySafe || (e.safe && !e.protected)) &&
       (!term || (e.key + ' ' + e.category + ' ' + e.technology).toLowerCase().includes(term))
     ).sort((a, b) => ui.sortLargest ? (b.bytes || 0) - (a.bytes || 0) : a.key.localeCompare(b.key));
@@ -270,7 +283,9 @@ export function renderStorageManager() {
     if (ui.edit) {
       const field = el('textarea', { class: C + 'editor', rows: '12', 'aria-label': 'Edit entry value' });
       field.value = actual;
-      body.append(field,
+      const editError = paragraph('', C + 'error');
+      editError.hidden = true;
+      body.append(field, editError,
         el('div', { class: C + 'controls' },
           action('Cancel edit', () => { ui.edit = false; draw(); }),
           action('Save edited value', () => {
@@ -280,7 +295,10 @@ export function renderStorageManager() {
               ui.detail = null;
               ui.message = 'Value saved. Refresh the page if an active setting does not update immediately.';
               refresh();
-            } catch (error) { feedback(error.message || String(error), true); }
+            } catch (error) {
+              editError.textContent = error.message || String(error);
+              editError.hidden = false;
+            }
           }, C + 'primary')
         ));
       return;
