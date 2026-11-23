@@ -29,7 +29,7 @@ function downloadJson(data, filename) {
   }
 }
 
-function askConfirmation({ title, description, phrase = '', danger = false }) {
+function askConfirmation({ title, description, phrase = '', danger = false, backup = null }) {
   return new Promise(resolve => {
     const overlay = el('div', { class: C + 'confirm-backdrop', role: 'presentation' });
     const card = el('section', { class: C + 'confirm', role: 'dialog', 'aria-modal': 'true', 'aria-label': title });
@@ -45,7 +45,11 @@ function askConfirmation({ title, description, phrase = '', danger = false }) {
     overlay.addEventListener('click', e => { if (e.target === overlay) finish(false); });
     card.append(heading(title), info);
     if (input) card.append(input);
-    card.append(el('div', { class: C + 'controls' }, action('Cancel', () => finish(false)), yes));
+    card.append(el('div', { class: C + 'controls' },
+      action('Cancel', () => finish(false)),
+      ...(backup ? [action('📦 Export backup first', backup)] : []),
+      yes
+    ));
     overlay.append(card);
     document.body.append(overlay);
     (input || card.querySelector('button')).focus();
@@ -104,15 +108,17 @@ export function renderStorageManager() {
     if (!entries.length) { feedback('No eligible items were selected.'); return; }
     const size = readableSize(entries.reduce((sum, e) => sum + (e.bytes || 0), 0));
     const categories = [...new Set(entries.map(e => e.category))];
+    const breakdown = categories.map(c => c + ': ' + entries.filter(e => e.category === c).length).join('\n');
     const message = all
       ? 'This will reset all identified Viaticum browser data, including saved views, account connection, settings and undo history.\n\nUnknown data and other applications will be preserved. This cannot necessarily be undone. Export a backup first if you need one.'
-      : entries.length + ' item(s): ' + categories.join(', ') + '\nApproximate space: ' + size + '\n\nSaved work, settings and unknown data will remain protected.';
+      : entries.length + ' eligible item(s):\n' + breakdown + '\nApproximate space: ' + size + '\n\nSaved work, settings and unknown data will remain protected.';
     if (all) {
       const canLeave = window.dispatchEvent(new CustomEvent('viaticum:leave-overview', { cancelable: true }));
       if (!canLeave) { feedback('Unsaved Overview changes must be resolved before resetting storage.', true); return; }
     }
     const confirmed = await askConfirmation({
-      title, description: message, danger: true, phrase: all ? 'CLEAR VIATICUM' : ''
+      title, description: message, danger: true, phrase: all ? 'CLEAR VIATICUM' : '',
+      backup: all ? () => downloadJson(buildBackup(owned()), 'viaticum-pre-reset-backup.json') : null
     });
     if (!confirmed) return;
     ui.busy = true;
