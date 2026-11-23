@@ -36,6 +36,8 @@
 .vtm-storage-topbar { border-bottom: 1px solid var(--panel-border,#b5d4e5); padding-bottom: 10px; }
 .vtm-storage-topbar p { margin: 0; }
 .vtm-storage-stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-bottom: 12px; }
+.vtm-storage-bar { height: 15px; border-radius: 20px; overflow: hidden; background: color-mix(in srgb,var(--blue,#2196f3) 35%,var(--panel-bg,#e9f5fd)); border: 1px solid var(--panel-border,#b5d4e5); }
+.vtm-storage-bar-safe { display: block; height: 100%; background: #44b68c; }
 .vtm-storage-stat {
   padding: 13px; border-radius: 12px; background: var(--panel-bg,#e9f5fd);
   border: 1px solid var(--panel-border,#b5d4e5); min-width: 0;
